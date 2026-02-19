@@ -52,6 +52,7 @@ let pollTimer    = null;
 let pendingRetry = null;
 let movementTimer = null;
 let heldMovementKeys = new Set(); // Track which movement keys are held
+let lastMovementKey = null; // Track most recent movement key pressed
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const setupScreen   = document.getElementById('setup-screen');
@@ -242,6 +243,7 @@ function doDisconnect() {
   stopPoller();
   stopContinuousMovement();
   heldMovementKeys.clear();
+  lastMovementKey = null;
   playerId = null; playerName = '';
   gameScreen.classList.remove('active');
   setupScreen.classList.add('active');
@@ -386,13 +388,16 @@ function handleKeyDown(e) {
 
   if (action === 'move') {
     lastMoveDir = direction;
+    lastMovementKey = keyId;
     // Add to held movement keys for continuous movement
     heldMovementKeys.add(keyId);
+    // Send immediate first move for responsiveness
+    sendAction('move', direction, null);
     // Start continuous movement if not already running
     if (!movementTimer) {
       startContinuousMovement();
     }
-    return; // Don't send initial move action, let the timer handle it
+    return;
   }
   if (action === 'shoot' && mapping.useAimAngle) {
     // Space uses aim pad angle
@@ -413,6 +418,11 @@ function handleKeyUp(e) {
   const keyId = e.key;
   if (['w', 'a', 's', 'd'].includes(keyId)) {
     heldMovementKeys.delete(keyId);
+    // Update last movement key if this was the current one
+    if (lastMovementKey === keyId) {
+      // Pick another held key as the new last movement key
+      lastMovementKey = heldMovementKeys.size > 0 ? Array.from(heldMovementKeys)[0] : null;
+    }
     // Stop continuous movement if no movement keys are held
     if (heldMovementKeys.size === 0) {
       stopContinuousMovement();
@@ -430,21 +440,12 @@ function startContinuousMovement() {
       return;
     }
     
-    // Get the most recent movement key pressed
-    let direction = null;
-    const moveKeys = ['w', 'a', 's', 'd'];
-    for (let i = moveKeys.length - 1; i >= 0; i--) {
-      if (heldMovementKeys.has(moveKeys[i])) {
-        const mapping = KEY_MAP[moveKeys[i]];
-        if (mapping) {
-          direction = mapping.direction;
-          break;
-        }
+    // Use the most recently pressed movement key
+    if (lastMovementKey && heldMovementKeys.has(lastMovementKey)) {
+      const mapping = KEY_MAP[lastMovementKey];
+      if (mapping && mapping.action === 'move') {
+        sendAction('move', mapping.direction, null);
       }
-    }
-    
-    if (direction) {
-      sendAction('move', direction, null);
     }
   }, MOVEMENT_TICK_MS);
 }
