@@ -13,10 +13,8 @@ module.exports = {
 
   // Player defaults
   PLAYER_HP: 100,
-  PLAYER_ENERGY: 25,
   PLAYER_AMMO: 5,
   PLAYER_MAX_AMMO: 5,
-  PLAYER_MAX_ENERGY: 25,
   PLAYER_SPEED: 0.5,              // units per action (lower = smoother)
   PLAYER_SIZE: 0.4,              // collision radius
 
@@ -26,22 +24,9 @@ module.exports = {
   BULLET_MAX_LIFETIME_TICKS: 50, // 2.5 seconds at 20 TPS (increased for more range)
   MAX_BULLETS_PER_PLAYER: 5,
 
-  // Shield
-  SHIELD_DAMAGE_REDUCTION: 0.5,  // 50% reduction
-  SHIELD_ENERGY_COST: 5,
-  SHIELD_DURATION_TICKS: 6,      // ~300ms
-
-  // Dash
-  DASH_DISTANCE: 3,
-  DASH_ENERGY_COST: 8,
-
   // Reload
   RELOAD_AMOUNT: 5,              // full reload
   RELOAD_COOLDOWN_TICKS: 10,     // 0.5s cooldown
-
-  // Regen
-  ENERGY_REGEN_RATE: 1,          // per tick
-  ENERGY_REGEN_INTERVAL: 20,     // every 20 ticks (1 sec)
 
   // Rate limiting
   MAX_ACTIONS_PER_SECOND: 20,

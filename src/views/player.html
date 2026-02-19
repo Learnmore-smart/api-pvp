@@ -6,10 +6,19 @@
 <title>API PVP – Player Monitor</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg:      #f4f5fb;
+    --bg2:     #ffffff;
+    --bg3:     #eef0f8;
+    --border:  #d4d8ee;
+    --accent:  #5b4fcf;
+    --text:    #1e1e38;
+    --dim:     #6b7080;
+  }
   html, body {
     height: 100%;
-    background: #1a1432;
-    color: #e0e0e0;
+    background: var(--bg);
+    color: var(--text);
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     overflow: hidden;
   }
@@ -25,30 +34,30 @@
     gap: 12px;
     padding: 20px;
   }
-  #setup h1 { color: #00e5cc; margin-bottom: 10px; letter-spacing: 2px; }
-  #setup p  { color: #555; font-size: 0.85em; max-width: 320px; text-align: center; }
+  #setup h1 { color: var(--accent); margin-bottom: 10px; letter-spacing: 2px; }
+  #setup p  { color: var(--dim); font-size: 0.85em; max-width: 320px; text-align: center; }
   #setup input, #setup button {
     padding: 10px 20px;
     font-size: 1em;
     border-radius: 6px;
-    border: 1px solid #444;
+    border: 1px solid var(--border);
     width: 300px;
   }
-  #setup input { background: #2d1b4e; color: #eee; }
-  #setup input::placeholder { color: #777; }
-  #setup button { background: #00e5cc; color: #1a1432; cursor: pointer; border: none; font-weight: 600; }
-  #setup button:hover { background: #00d4ff; }
-  #setup .alt-btn { background: #b537f2; color: #fff; }
-  #setup .alt-btn:hover { background: #c554ff; }
-  #setup .divider { color: #333; font-size: 0.8em; }
+  #setup input { background: var(--bg3); color: var(--text); }
+  #setup input::placeholder { color: #999; }
+  #setup button { background: var(--accent); color: #fff; cursor: pointer; border: none; font-weight: 600; }
+  #setup button:hover { opacity: 0.88; }
+  #setup .alt-btn { background: #e8e6fc; color: var(--accent); border: 1px solid #c5c0f0; }
+  #setup .alt-btn:hover { background: #d8d4f8; }
+  #setup .divider { color: var(--dim); font-size: 0.8em; }
   #setup .error { color: #e74c3c; font-size: 0.85em; min-height: 1.2em; }
 
   /* ── Game view — fixed layout, no overflow ── */
   #game-view {
     display: none;
     flex-direction: column;
-    height: 100%;        /* fill viewport */
-    overflow: hidden;    /* hard stop: nothing may push past the viewport */
+    height: 100%;
+    overflow: hidden;
   }
 
   /* Top bar */
@@ -58,26 +67,26 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 16px;
-    background: #2d1b4e;
-    border-bottom: 2px solid #b537f2;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     gap: 12px;
   }
-  #top-bar .name { font-weight: bold; color: #00e5cc; font-size: 1.1em; white-space: nowrap; }
+  #top-bar .name { font-weight: bold; color: var(--accent); font-size: 1.1em; white-space: nowrap; }
   #stats { display: flex; gap: 10px; }
   .stat-box {
     text-align: center;
     padding: 4px 12px;
-    background: #1a1432;
+    background: var(--bg3);
     border-radius: 6px;
     min-width: 64px;
-    border: 1px solid #3d2864;
+    border: 1px solid var(--border);
   }
-  .stat-box .label { color: #999; font-size: 0.65em; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-box .label { color: var(--dim); font-size: 0.65em; text-transform: uppercase; letter-spacing: 1px; }
   .stat-box .value { font-size: 1.15em; font-weight: bold; }
-  .stat-hp     { color: #00e5cc; }
-  .stat-ammo   { color: #ffd93d; }
-  .stat-energy { color: #00d4ff; }
-  .stat-kills  { color: #ff6bcb; }
+  .stat-hp     { color: #2ecc71; }
+  .stat-ammo   { color: var(--accent); }
+  .stat-kills  { color: #e74c3c; }
   #mode-label {
     padding: 3px 12px;
     border-radius: 12px;
@@ -93,19 +102,20 @@
   /* Canvas area — fills ALL remaining vertical space */
   #canvas-area {
     flex: 1;
-    min-height: 0;      /* ← KEY: prevents flex child from expanding beyond container */
-    overflow: hidden;   /* ← belt-and-suspenders: canvas never bleeds out */
-    position: relative; /* canvas is absolute inside */
-    background: #1a1432;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
   }
   #viewport {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #0e0a1e;
-    border: 2px solid #b537f2;
+    background: #eef0fc;
+    border: 1px solid var(--border);
     border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(91,79,207,0.08);
     display: block;
   }
 
@@ -114,19 +124,19 @@
     flex-shrink: 0;
     height: 52px;
     overflow: hidden;
-    background: #0e0a1e;
-    border-top: 1px solid #b537f2;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
     padding: 4px 12px;
     font-size: 0.7em;
-    color: #777;
+    color: var(--dim);
     display: flex;
     flex-direction: column-reverse;
     gap: 1px;
   }
   .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .log-ok   { color: #00e5cc; }
-  .log-warn { color: #ffd93d; }
-  .log-err  { color: #ff6bcb; }
+  .log-ok   { color: #2ecc71; }
+  .log-warn { color: #e8a000; }
+  .log-err  { color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -154,7 +164,6 @@
     <div id="stats">
       <div class="stat-box"><div class="label">HP</div><div class="value stat-hp"     id="s-hp">100</div></div>
       <div class="stat-box"><div class="label">Ammo</div><div class="value stat-ammo"   id="s-ammo">5</div></div>
-      <div class="stat-box"><div class="label">Energy</div><div class="value stat-energy" id="s-energy">25</div></div>
       <div class="stat-box"><div class="label">Kills</div><div class="value stat-kills"  id="s-kills">0</div></div>
     </div>
     <span id="mode-label">SANDBOX</span>
@@ -276,21 +285,20 @@ function updateHUD() {
 
   document.getElementById('s-hp').textContent     = s.hp;
   document.getElementById('s-ammo').textContent   = s.ammo;
-  document.getElementById('s-energy').textContent = s.energy;
   document.getElementById('s-kills').textContent  = s.kills;
 
   const hpEl = document.getElementById('s-hp');
-  hpEl.style.color = s.hp > 50 ? '#00e5cc' : s.hp > 25 ? '#ffd93d' : '#ff6bcb';
+  hpEl.style.color = s.hp > 50 ? '#2ecc71' : s.hp > 25 ? '#f39c12' : '#e74c3c';
 
   const modeEl = document.getElementById('mode-label');
   const modeMap = {
-    test:     ['SANDBOX',  '#00e5cc', '#1a1432', '#00e5cc'],
-    sandbox:  ['SANDBOX',  '#00e5cc', '#1a1432', '#00e5cc'],
-    lobby:    ['LOBBY',    '#00d4ff', '#1a1432', '#00d4ff'],
-    battle:   ['BATTLE',   '#ff6bcb', '#1a1432', '#ff6bcb'],
-    finished: ['FINISHED', '#ffd93d', '#1a1432', '#ffd93d'],
+    test:     ['SANDBOX',  '#e0f5ec', '#1a7a4a', '#a8d5bd'],
+    sandbox:  ['SANDBOX',  '#e0f5ec', '#1a7a4a', '#a8d5bd'],
+    lobby:    ['LOBBY',    '#e0f5ec', '#1a7a4a', '#a8d5bd'],
+    battle:   ['BATTLE',   '#fde8e8', '#9b2226', '#f5b5b5'],
+    finished: ['FINISHED', '#fef9e7', '#7a6200', '#e8d88a'],
   };
-  const [label, bg, fg, borderColor] = modeMap[playerState.mode] || ['—', '#333', '#aaa', '#333'];
+  const [label, bg, fg, borderColor] = modeMap[playerState.mode] || ['—', '#eee', '#999', '#ccc'];
   modeEl.textContent       = label;
   modeEl.style.background  = bg;
   modeEl.style.color       = fg;
@@ -316,7 +324,7 @@ function renderViewport() {
 
   // Arena background
   if (arena) {
-    ctx.fillStyle = '#0e0a1e';
+    ctx.fillStyle = '#eef0fc';
     ctx.fillRect(
       Math.max(0, oX),
       Math.max(0, oY),
@@ -325,7 +333,7 @@ function renderViewport() {
     );
 
     // Grid lines
-    ctx.strokeStyle = '#2d1b4e';
+    ctx.strokeStyle = 'rgba(0,0,60,0.05)';
     ctx.lineWidth   = 0.5;
     const x0 = Math.max(0, Math.floor(-oX / CELL));
     const x1 = Math.min(arena.width,  Math.ceil((W - oX) / CELL));
@@ -345,7 +353,7 @@ function renderViewport() {
     }
 
     // Arena border
-    ctx.strokeStyle = '#b537f2';
+    ctx.strokeStyle = '#5b4fcf';
     ctx.lineWidth   = 2;
     ctx.strokeRect(oX, oY, arena.width * CELL, arena.height * CELL);
 
@@ -356,8 +364,8 @@ function renderViewport() {
       const rw = obs.w * CELL;
       const rh = obs.h * CELL;
       if (rx + rw < 0 || rx > W || ry + rh < 0 || ry > H) continue;
-      ctx.fillStyle   = obs.type === 'wall' ? '#3d2864' : '#5a4a2a';
-      ctx.strokeStyle = obs.type === 'wall' ? '#6543a5' : '#8a7a4a';
+      ctx.fillStyle   = obs.type === 'wall' ? '#c0c5e8' : '#d4a870';
+      ctx.strokeStyle = obs.type === 'wall' ? '#9098c8' : '#b08840';
       ctx.lineWidth   = 1;
       ctx.fillRect(rx, ry, rw, rh);
       ctx.strokeRect(rx, ry, rw, rh);
@@ -368,20 +376,19 @@ function renderViewport() {
   for (const p of (playerState.nearbyProjectiles || [])) {
     const px = p.x * CELL + oX;
     const py = p.y * CELL + oY;
-    const isMine = p.ownerId === playerId;
-    ctx.fillStyle   = isMine ? '#00e5cc' : '#ffd93d';
-    ctx.shadowColor = ctx.fillStyle;
+    ctx.fillStyle   = '#e67e22';
+    ctx.shadowColor = 'rgba(230,126,34,0.5)';
     ctx.shadowBlur  = 8;
     ctx.beginPath();
-    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = isMine ? 'rgba(0,229,204,0.3)' : 'rgba(255,217,61,0.3)';
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(230,126,34,0.5)';
     ctx.lineWidth   = 2;
     ctx.beginPath();
     ctx.moveTo(px, py);
     ctx.lineTo(px - p.dx * CELL * 0.5, py - p.dy * CELL * 0.5);
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
 
   // Other players
@@ -391,7 +398,7 @@ function renderViewport() {
   drawPlayer(self, oX, oY, true);
 
   // Faint crosshair centred on self
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(0,0,60,0.05)';
   ctx.lineWidth   = 1;
   ctx.setLineDash([4, 10]);
   ctx.beginPath();
@@ -407,7 +414,7 @@ function drawPlayer(p, oX, oY, isSelf) {
   const r  = 0.4 * CELL;
 
   if (!p.alive) {
-    ctx.strokeStyle = '#555';
+    ctx.strokeStyle = '#ccc';
     ctx.lineWidth   = 2;
     ctx.beginPath();
     ctx.moveTo(px - r * 0.6, py - r * 0.6); ctx.lineTo(px + r * 0.6, py + r * 0.6);
@@ -416,31 +423,20 @@ function drawPlayer(p, oX, oY, isSelf) {
     return;
   }
 
-  // Shield ring
-  if (p.shielded) {
-    ctx.strokeStyle = 'rgba(0,212,255,0.7)';
-    ctx.lineWidth   = 3;
-    ctx.beginPath();
-    ctx.arc(px, py, r + 5, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
   // Body
-  ctx.fillStyle = isSelf ? '#00e5cc' : (p.color || '#ff6bcb');
-  if (isSelf) { ctx.shadowColor = '#00e5cc'; ctx.shadowBlur = 12; }
+  ctx.fillStyle = p.color || '#5b4fcf';
   ctx.beginPath();
   ctx.arc(px, py, r, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowBlur  = 0;
-  ctx.strokeStyle = isSelf ? 'rgba(0,229,204,0.5)' : 'rgba(255,255,255,0.15)';
-  ctx.lineWidth   = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth   = 1.5;
   ctx.beginPath();
   ctx.arc(px, py, r, 0, Math.PI * 2);
   ctx.stroke();
 
   // Label
-  ctx.fillStyle  = '#fff';
-  ctx.font       = '11px sans-serif';
+  ctx.fillStyle  = '#111';
+  ctx.font       = '600 11px sans-serif';
   ctx.textAlign  = 'center';
   ctx.fillText(isSelf ? 'YOU' : p.username, px, py - r - 6);
 
@@ -449,10 +445,10 @@ function drawPlayer(p, oX, oY, isSelf) {
   const bH = 4;
   const bX = px - bW / 2;
   const bY = py + r + 5;
-  ctx.fillStyle = '#2d1b4e';
+  ctx.fillStyle = '#dde1f0';
   ctx.fillRect(bX, bY, bW, bH);
   const pct = p.hp / 100;
-  ctx.fillStyle = pct > 0.5 ? '#00e5cc' : pct > 0.25 ? '#ffd93d' : '#ff6bcb';
+  ctx.fillStyle = pct > 0.5 ? '#2ecc71' : pct > 0.25 ? '#f39c12' : '#e74c3c';
   ctx.fillRect(bX, bY, bW * pct, bH);
 }
 

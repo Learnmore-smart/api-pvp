@@ -364,8 +364,7 @@ function render() {
       ctx.beginPath(); ctx.arc(px, py, r+5*s, 0, Math.PI*2); ctx.stroke();
     }
 
-    ctx.fillStyle = p.color || '#5b4fcf';
-    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = p.color || '#5b4fcf';    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = P.playerBorder;
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
@@ -405,13 +404,12 @@ function updateSidebar() {
     var hpColor = hp>50 ? '#2ecc71' : hp>25 ? '#f39c12' : '#e74c3c';
     return '<div class="player-card ' + (p.alive===false?'dead':'') + '" style="border-left-color:' + (p.color||'#ccc') + '">' +
       '<div class="pcard-header">' +
-        '<div class="player-name" style="color:' + (p.color||'#333') + '">' + esc(p.username) + (p.shielded?' &#128737;':'') + '</div>' +
+        '<div class="player-name" style="color:' + (p.color||'#333') + '">' + esc(p.username) + '</div>' +
         '<button class="kick-btn" onclick="kickPlayer(\'' + p.id + '\')">&#10005;</button>' +
       '</div>' +
       '<div class="player-stat"><span>HP</span><span>' + hp + '/100</span></div>' +
       '<div class="hp-bar"><div class="hp-bar-fill" style="width:' + hp + '%;background:' + hpColor + '"></div></div>' +
       '<div class="player-stat"><span>Ammo</span><span>' + (p.ammo!=null?p.ammo:'&mdash;') + '</span></div>' +
-      '<div class="player-stat"><span>Energy</span><span>' + (p.energy!=null?p.energy:'&mdash;') + '</span></div>' +
       '<div class="player-stat"><span>Kills</span><span>' + (p.kills||0) + '</span></div>' +
       (p.alive===false?'<div style="color:#e74c3c;font-size:0.72em;margin-top:3px">&#9760; Eliminated</div>':'') +
       '</div>';
