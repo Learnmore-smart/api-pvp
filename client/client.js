@@ -23,8 +23,6 @@ const ACTION_RETRY_MS   = 80;
 const MAX_LOG_ENTRIES   = 120;
 const MOVEMENT_TICK_MS  = 50;  // Continuous movement update rate (20 times per second)
 
-const COST_SHIELD = 5;
-const COST_DASH   = 8;
 const MAX_AMMO    = 5;
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -35,10 +33,8 @@ let playerName = '';
 let localState = {
   hp:       100,
   ammo:     MAX_AMMO,
-  energy:   25,
   kills:    0,
   alive:    true,
-  shielded: false,
   reloadCd: false,
   mode:     'test',
 };
@@ -67,14 +63,11 @@ const playerIdEl    = document.getElementById('player-id-display');
 const modeBadge     = document.getElementById('mode-badge');
 
 const barHp         = document.getElementById('bar-hp');
-const barEnergy     = document.getElementById('bar-energy');
 const ammoPips      = document.getElementById('ammo-pips');
 const valHp         = document.getElementById('val-hp');
 const valAmmo       = document.getElementById('val-ammo');
-const valEnergy     = document.getElementById('val-energy');
 const valKills      = document.getElementById('val-kills');
 
-const indShield     = document.getElementById('ind-shield');
 const indReload     = document.getElementById('ind-reload');
 const indDead       = document.getElementById('ind-dead');
 const lastActionEl  = document.getElementById('last-action');
@@ -100,9 +93,7 @@ const KEY_BOXES = {
   down:  document.getElementById('k-down'),
   right: document.getElementById('k-right'),
   space: document.getElementById('k-space'),
-  shift: document.getElementById('k-shift'),
   r:     document.getElementById('k-r'),
-  f:     document.getElementById('k-f'),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -236,7 +227,7 @@ function enterGame() {
   startPoller();
   addLog('Registered as ' + playerName + ' (' + playerId + ')', 'ok');
   addLog('Server: ' + serverUrl, 'info');
-  addLog('WASD=move  Space=shoot(aim)  Arrows=shoot cardinal  Shift=shield  R=reload  F=dash', 'info');
+  addLog('WASD=move  Space=shoot(aim)  Arrows=shoot cardinal  R=reload', 'info');
 }
 
 function doDisconnect() {
@@ -278,10 +269,8 @@ function applyState(data) {
   const s = data.self;
   localState.hp       = s.hp       != null ? s.hp       : localState.hp;
   localState.ammo     = s.ammo     != null ? s.ammo     : localState.ammo;
-  localState.energy   = s.energy   != null ? s.energy   : localState.energy;
   localState.kills    = s.kills    != null ? s.kills    : localState.kills;
   localState.alive    = s.alive    != null ? s.alive    : localState.alive;
-  localState.shielded = s.shielded || false;
   localState.reloadCd = s.reloadCooldown > 0;
   localState.mode     = data.mode  || localState.mode;
   updateHUD();
@@ -292,16 +281,12 @@ function applyState(data) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function updateHUD() {
-  const { hp, ammo, energy, kills, alive, shielded, reloadCd, mode } = localState;
+  const { hp, ammo, kills, alive, reloadCd, mode } = localState;
 
   const hpPct = Math.max(0, Math.min(100, hp));
   barHp.style.width      = hpPct + '%';
   barHp.style.background = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f1c40f' : '#e74c3c';
   valHp.textContent      = hp;
-
-  const ePct = Math.max(0, Math.min(100, (energy / 25) * 100));
-  barEnergy.style.width = ePct + '%';
-  valEnergy.textContent = energy;
 
   if (ammoPips.children.length !== MAX_AMMO) {
     ammoPips.innerHTML = '';
@@ -328,7 +313,6 @@ function updateHUD() {
   modeBadge.textContent = mEntry[0];
   modeBadge.className   = 'badge ' + mEntry[1];
 
-  indShield.classList.toggle('active', !!shielded);
   indReload.classList.toggle('active', !!reloadCd);
   indDead.classList.toggle('hidden', !!alive);
   if (!alive) indDead.classList.add('dead');
@@ -350,9 +334,7 @@ const KEY_MAP = {
   's':          { action: 'move',   direction: 'down'  },
   'd':          { action: 'move',   direction: 'right' },
   ' ':          { action: 'shoot',  direction: null,  useAimAngle: true  },
-  'Shift':      { action: 'shield', direction: null   },
   'r':          { action: 'reload', direction: null   },
-  'f':          { action: 'dash',   direction: null   },
   // Arrow keys = cardinal shoot
   'ArrowUp':    { action: 'shoot',  direction: 'up'    },
   'ArrowLeft':  { action: 'shoot',  direction: 'left'  },
@@ -403,9 +385,6 @@ function handleKeyDown(e) {
     // Space uses aim pad angle
     angle = aimAngle;
     direction = null;
-  }
-  if (action === 'dash') {
-    direction = lastMoveDir;
   }
 
   sendAction(action, direction, angle);
@@ -462,8 +441,8 @@ const KEY_BOX_MAP = {
   'w': KEY_BOXES.w, 'a': KEY_BOXES.a, 's': KEY_BOXES.s, 'd': KEY_BOXES.d,
   'ArrowUp': KEY_BOXES.up, 'ArrowLeft': KEY_BOXES.left,
   'ArrowDown': KEY_BOXES.down, 'ArrowRight': KEY_BOXES.right,
-  ' ': KEY_BOXES.space, 'Shift': KEY_BOXES.shift,
-  'r': KEY_BOXES.r, 'f': KEY_BOXES.f,
+  ' ': KEY_BOXES.space,
+  'r': KEY_BOXES.r,
 };
 
 function flashKey(keyId) {
@@ -496,14 +475,6 @@ async function sendAction(action, direction, angle) {
   }
   if (action === 'shoot' && localState.ammo <= 0) {
     setLastAction('No ammo — press R to reload', 'warn');
-    return;
-  }
-  if (action === 'shield' && localState.energy < COST_SHIELD) {
-    setLastAction('Not enough energy (' + localState.energy + '/' + COST_SHIELD + ')', 'warn');
-    return;
-  }
-  if (action === 'dash' && localState.energy < COST_DASH) {
-    setLastAction('Not enough energy for dash (' + localState.energy + '/' + COST_DASH + ')', 'warn');
     return;
   }
   if (action === 'reload' && localState.reloadCd) {

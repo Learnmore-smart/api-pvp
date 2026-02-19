@@ -1,7 +1,7 @@
 const {
-  PLAYER_HP, PLAYER_ENERGY, PLAYER_AMMO,
-  PLAYER_MAX_AMMO, PLAYER_MAX_ENERGY, PLAYER_SIZE,
-  SHIELD_DURATION_TICKS, RELOAD_COOLDOWN_TICKS,
+  PLAYER_HP, PLAYER_AMMO,
+  PLAYER_MAX_AMMO, PLAYER_SIZE,
+  RELOAD_COOLDOWN_TICKS,
 } = require('./constants');
 
 class Player {
@@ -14,14 +14,11 @@ class Player {
 
     // Stats
     this.hp = PLAYER_HP;
-    this.energy = PLAYER_ENERGY;
     this.ammo = PLAYER_AMMO;
     this.maxAmmo = PLAYER_MAX_AMMO;
-    this.maxEnergy = PLAYER_MAX_ENERGY;
     this.alive = true;
 
     // State flags
-    this.shieldTicks = 0;         // remaining shield ticks
     this.reloadCooldown = 0;      // remaining reload cooldown ticks
     this.ready = false;
 
@@ -45,41 +42,27 @@ class Player {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  get isShielded() {
-    return this.shieldTicks > 0;
-  }
-
   get isReloading() {
     return this.reloadCooldown > 0;
   }
 
   takeDamage(amount) {
     if (!this.alive) return 0;
-    const actual = this.isShielded ? Math.floor(amount * 0.5) : amount;
-    this.hp = Math.max(0, this.hp - actual);
+    this.hp = Math.max(0, this.hp - amount);
     if (this.hp <= 0) {
       this.alive = false;
     }
-    return actual;
+    return amount;
   }
 
   tickCooldowns() {
-    if (this.shieldTicks > 0) this.shieldTicks--;
     if (this.reloadCooldown > 0) this.reloadCooldown--;
-  }
-
-  regenEnergy() {
-    if (this.energy < this.maxEnergy) {
-      this.energy = Math.min(this.maxEnergy, this.energy + 1);
-    }
   }
 
   reset(x, y) {
     this.hp = PLAYER_HP;
-    this.energy = PLAYER_ENERGY;
     this.ammo = PLAYER_AMMO;
     this.alive = true;
-    this.shieldTicks = 0;
     this.reloadCooldown = 0;
     this.pendingAction = null;
     this.kills = 0;
@@ -96,13 +79,10 @@ class Player {
       x: Math.round(this.x * 100) / 100,
       y: Math.round(this.y * 100) / 100,
       hp: this.hp,
-      energy: this.energy,
       ammo: this.ammo,
       alive: this.alive,
-      shielded: this.isShielded,
       reloading: this.isReloading,
       reloadCooldown: this.reloadCooldown,
-      shieldTicks: this.shieldTicks,
       kills: this.kills,
       color: this.color,
     };

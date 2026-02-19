@@ -54,13 +54,13 @@ class GameEngine {
     if (!player || !player.alive) return { error: 'Invalid player or player is dead' };
 
     // Validate action
-    const validActions = ['move', 'shoot', 'reload', 'shield', 'dash'];
+    const validActions = ['move', 'shoot', 'reload'];
     if (!validActions.includes(action)) {
       return { error: `Invalid action: ${action}` };
     }
 
     // Validate direction for directional actions — accept named direction OR numeric angle
-    if (['move', 'shoot', 'dash'].includes(action)) {
+    if (['move', 'shoot'].includes(action)) {
       const hasAngle     = typeof angle === 'number' && isFinite(angle);
       const hasDirection = direction && C.DIRECTIONS[direction];
       if (!hasAngle && !hasDirection) {
@@ -155,20 +155,15 @@ class GameEngine {
     // 5. Tick cooldowns
     this._tickCooldowns();
 
-    // 6. Energy regen
-    if (this.tickCount % C.ENERGY_REGEN_INTERVAL === 0) {
-      this._regenEnergy();
-    }
-
-    // 7. Clean up dead projectiles
+    // 6. Clean up dead projectiles
     this._cleanupProjectiles();
 
-    // 8. Check win condition (battle mode)
+    // 7. Check win condition (battle mode)
     if (this.mode === C.MODE_BATTLE) {
       this._checkWinCondition();
     }
 
-    // 9. Broadcast state
+    // 8. Broadcast state
     if (this.onStateUpdate) {
       this.onStateUpdate(this.getFullState());
     }
@@ -185,8 +180,6 @@ class GameEngine {
         case 'move':   this._handleMove(player, direction, angle);   break;
         case 'shoot':  this._handleShoot(player, direction, angle);  break;
         case 'reload': this._handleReload(player);                   break;
-        case 'shield': this._handleShield(player);                   break;
-        case 'dash':   this._handleDash(player, direction, angle);   break;
       }
     }
   }
@@ -266,50 +259,6 @@ class GameEngine {
     player.reloadCooldown = C.RELOAD_COOLDOWN_TICKS;
   }
 
-  _handleShield(player) {
-    if (player.energy < C.SHIELD_ENERGY_COST) return;
-    player.energy -= C.SHIELD_ENERGY_COST;
-    player.shieldTicks = C.SHIELD_DURATION_TICKS;
-  }
-
-  _handleDash(player, direction, angle = null) {
-    if (player.energy < C.DASH_ENERGY_COST) return;
-
-    let dx, dy;
-    if (typeof angle === 'number') {
-      const rad = (angle * Math.PI) / 180;
-      const len = Math.hypot(Math.cos(rad), Math.sin(rad));
-      dx = Math.cos(rad) / len;
-      dy = Math.sin(rad) / len;
-    } else {
-      const dir = C.DIRECTIONS[direction];
-      if (!dir) return;
-      dx = dir.x;
-      dy = dir.y;
-    }
-
-    player.energy -= C.DASH_ENERGY_COST;
-
-    for (let step = 1; step <= C.DASH_DISTANCE; step++) {
-      const newX = player.x + dx;
-      const newY = player.y + dy;
-      if (this.arena.isBlocked(newX, newY, player.size)) break;
-
-      let blocked = false;
-      for (const other of this.players.values()) {
-        if (other.id === player.id || !other.alive) continue;
-        if (Math.hypot(newX - other.x, newY - other.y) < player.size + other.size) {
-          blocked = true;
-          break;
-        }
-      }
-      if (blocked) break;
-
-      player.x = newX;
-      player.y = newY;
-    }
-  }
-
   _moveProjectiles() {
     for (const proj of this.projectiles.values()) {
       if (proj.alive) proj.tick();
@@ -351,7 +300,6 @@ class GameEngine {
             shooter: proj.ownerId,
             target: player.id,
             damage: dmg,
-            shielded: player.isShielded,
           });
 
           break; // projectile can only hit one target
@@ -372,12 +320,6 @@ class GameEngine {
   _tickCooldowns() {
     for (const player of this.players.values()) {
       player.tickCooldowns();
-    }
-  }
-
-  _regenEnergy() {
-    for (const player of this.players.values()) {
-      if (player.alive) player.regenEnergy();
     }
   }
 
@@ -478,10 +420,8 @@ class GameEngine {
       arena: this.arena.toJSON(),
       players: [...this.players.values()].map(p => ({
         ...p.toJSON(),
-        energy: p.energy,
         ammo: p.ammo,
         pendingAction: p.pendingAction,
-        shieldTicks: p.shieldTicks,
         reloadCooldown: p.reloadCooldown,
         damageDealt: p.damageDealt,
       })),

@@ -35,11 +35,7 @@
         <span class="key wide">Space</span><span class="key-label">Shoot (aim pad angle)</span>
       </div>
       <div class="kb-row">
-        <span class="key wide">Shift</span><span class="key-label">Shield (5&#9889;)</span>
-      </div>
-      <div class="kb-row">
         <span class="key">R</span><span class="key-label">Reload</span>
-        <span class="key">F</span><span class="key-label">Dash (8&#9889;)</span>
       </div>
       <div class="kb-row">
         <span class="key dir-key">&#8679;</span><span class="key dir-key">&#8678;</span>
@@ -82,12 +78,6 @@
         </div>
 
         <div class="stat-row">
-          <span class="stat-label">Energy</span>
-          <div class="bar-wrap"><div id="bar-energy" class="bar bar-energy" style="width:100%"></div></div>
-          <span id="val-energy" class="stat-val">25</span>
-        </div>
-
-        <div class="stat-row">
           <span class="stat-label">Kills</span>
           <span id="val-kills" class="stat-val big">0</span>
         </div>
@@ -95,7 +85,6 @@
         <div class="divider"></div>
 
         <div class="cooldown-row">
-          <div id="ind-shield" class="indicator">&#128737; Shield</div>
           <div id="ind-reload" class="indicator">&#8635; Reload CD</div>
           <div id="ind-dead"   class="indicator hidden">&#128128; Dead</div>
         </div>
@@ -123,12 +112,8 @@
         <table class="key-table">
           <tr><td><div id="k-space" class="kbox wide">Space</div></td>
               <td>Shoot (aim angle)</td></tr>
-          <tr><td><div id="k-shift" class="kbox wide">Shift</div></td>
-              <td>Shield <span class="cost">(5&#9889;)</span></td></tr>
           <tr><td><div id="k-r" class="kbox">R</div></td>
               <td>Reload</td></tr>
-          <tr><td><div id="k-f" class="kbox">F</div></td>
-              <td>Dash <span class="cost">(8&#9889;)</span></td></tr>
           <tr><td>
             <div style="display:flex;gap:2px;flex-direction:column;align-items:center">
               <div id="k-up"   class="kbox">&#8679;</div>
@@ -159,7 +144,7 @@
 
         <div class="divider"></div>
         <div class="hint">
-          Actions are <strong>blocked</strong> when lacking ammo/energy.<br>
+          Actions are <strong>blocked</strong> when lacking ammo.<br>
           Cooldown actions are <strong>retried</strong> after 80ms.
         </div>
       </section>
