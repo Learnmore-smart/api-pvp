@@ -1,6 +1,6 @@
 # API PVP — API Reference
 
-**Base URL (local):** `http://localhost:3000`  
+**Base URL:** `{BASE_URL}` (examples in this doc use `http://localhost:3000`)  
 **Protocol:** HTTP/REST + WebSocket  
 **Content-Type:** `application/json`
 
@@ -11,6 +11,8 @@
 There is no auth token. Endpoints that act on a player require `player_id`.
 
 `player_id` format: `p_<8-char-id>` (example: `p_a1b2c3d4`).
+
+Mode notes: `/state` responses use `mode` values such as `test`, `battle`, and `finished`; `/register` returns `mode: "sandbox"` as an onboarding hint for private sandbox play.
 
 ---
 
@@ -253,14 +255,14 @@ Update frequency is tick-based (~50ms).
 
 ## 8. Gameplay Constants (current implementation)
 
-- Arena: `40 x 30`
+- Arena: `40 (width) x 30 (height)`
 - Tick rate: `20 TPS` (`50ms`)
 - Player speed: `0.5` units/action
 - HP: `100`
 - Ammo: `5`
 - Reload cooldown: `10` ticks
-- Projectile speed: `2` units/tick
-- Projectile damage: `25`
-- Projectile lifetime: `50` ticks
+- Bullet speed: `2` units/tick
+- Bullet damage: `25`
+- Bullet lifetime: `50` ticks
 - Max bullets alive per player: `5`
 - Max battle length: `2400` ticks (~2 minutes)
