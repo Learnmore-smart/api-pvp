@@ -21,6 +21,7 @@ const DEFAULT_SERVER    = 'https://api-pvp-production.up.railway.app';
 const POLL_INTERVAL_MS  = 200;
 const ACTION_RETRY_MS   = 80;
 const MAX_LOG_ENTRIES   = 120;
+const MOVEMENT_TICK_MS  = 50;  // Continuous movement update rate (20 times per second)
 
 const COST_SHIELD = 5;
 const COST_DASH   = 8;
@@ -49,6 +50,8 @@ let aimDragging  = false;
 let lastMoveDir  = 'up';
 let pollTimer    = null;
 let pendingRetry = null;
+let movementTimer = null;
+let heldMovementKeys = new Set(); // Track which movement keys are held
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const setupScreen   = document.getElementById('setup-screen');
@@ -237,6 +240,8 @@ function enterGame() {
 
 function doDisconnect() {
   stopPoller();
+  stopContinuousMovement();
+  heldMovementKeys.clear();
   playerId = null; playerName = '';
   gameScreen.classList.remove('active');
   setupScreen.classList.add('active');
@@ -381,6 +386,13 @@ function handleKeyDown(e) {
 
   if (action === 'move') {
     lastMoveDir = direction;
+    // Add to held movement keys for continuous movement
+    heldMovementKeys.add(keyId);
+    // Start continuous movement if not already running
+    if (!movementTimer) {
+      startContinuousMovement();
+    }
+    return; // Don't send initial move action, let the timer handle it
   }
   if (action === 'shoot' && mapping.useAimAngle) {
     // Space uses aim pad angle
@@ -396,6 +408,52 @@ function handleKeyDown(e) {
 
 function handleKeyUp(e) {
   heldKeys.delete(e.key);
+  
+  // Remove from held movement keys
+  const keyId = e.key;
+  if (['w', 'a', 's', 'd'].includes(keyId)) {
+    heldMovementKeys.delete(keyId);
+    // Stop continuous movement if no movement keys are held
+    if (heldMovementKeys.size === 0) {
+      stopContinuousMovement();
+    }
+  }
+}
+
+// Continuous movement loop
+function startContinuousMovement() {
+  if (movementTimer) return; // Already running
+  
+  movementTimer = setInterval(function() {
+    if (!playerId || !localState.alive || heldMovementKeys.size === 0) {
+      stopContinuousMovement();
+      return;
+    }
+    
+    // Get the most recent movement key pressed
+    let direction = null;
+    const moveKeys = ['w', 'a', 's', 'd'];
+    for (let i = moveKeys.length - 1; i >= 0; i--) {
+      if (heldMovementKeys.has(moveKeys[i])) {
+        const mapping = KEY_MAP[moveKeys[i]];
+        if (mapping) {
+          direction = mapping.direction;
+          break;
+        }
+      }
+    }
+    
+    if (direction) {
+      sendAction('move', direction, null);
+    }
+  }, MOVEMENT_TICK_MS);
+}
+
+function stopContinuousMovement() {
+  if (movementTimer) {
+    clearInterval(movementTimer);
+    movementTimer = null;
+  }
 }
 
 // Key box flash

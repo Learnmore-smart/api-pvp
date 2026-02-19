@@ -22,8 +22,8 @@ module.exports = {
 
   // Combat
   BULLET_DAMAGE: 25,
-  BULLET_SPEED: 2,               // units per tick
-  BULLET_MAX_LIFETIME_TICKS: 20, // 1 second at 20 TPS
+  BULLET_SPEED: 5,               // units per tick (increased for faster bullets)
+  BULLET_MAX_LIFETIME_TICKS: 30, // 1.5 seconds at 20 TPS (increased to maintain range)
   MAX_BULLETS_PER_PLAYER: 5,
 
   // Shield
