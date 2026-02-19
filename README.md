@@ -61,8 +61,9 @@ Server starts at **http://localhost:3000**
 ### `POST /action` — Submit an action
 ```json
 { "player_id": "p_a1b2c3d4", "action": "move", "direction": "up" }
-// Actions: move, shoot, reload, shield, dash
+// Actions: move, shoot, reload
 // Directions: up, down, left, right
+// move/shoot can also use: { "angle": 45 }
 ```
 
 ### `GET /state` — Get game state
@@ -81,12 +82,12 @@ GET /state?player_id=p_a1b2c3d4   → zoomed-in player state
 // No payload needed
 ```
 
-### `POST /reset` — Reset to test mode
+### `POST /reset` — Reset all players to sandbox mode
 ```json
 // No payload needed
 ```
 
-### `GET /debug` — Debug info (collisions, bullets, HP, energy)
+### `GET /debug` — Debug info (collisions, bullets, HP, cooldowns)
 
 ### `GET /players` — List all players
 
@@ -97,22 +98,21 @@ GET /state?player_id=p_a1b2c3d4   → zoomed-in player state
 | Stat | Default |
 |------|---------|
 | HP | 100 |
-| Energy | 25 |
 | Ammo | 5 |
 | Bullet Damage | 25 HP |
 | Bullet Speed | 2 units/tick |
-| Bullet Lifetime | 20 ticks (1 sec) |
-| Shield | 50% damage reduction, costs 5 energy |
-| Dash | 3 units, costs 8 energy |
+| Bullet Lifetime | 50 ticks (2.5 sec) |
+| Max bullets per player | 5 |
+| Reload cooldown | 10 ticks (0.5 sec) |
 | Tick Rate | 20 TPS (50ms per tick) |
-| Rate Limit | 5 actions/sec per player |
+| Rate Limit | 20 actions/sec per player |
 
 ## Game Flow
 
 ### Test Mode
 1. Register → `POST /register`
 2. Move around → `POST /action` with `move`
-3. Practice shooting, reloading, shielding
+3. Practice shooting and reloading
 4. Signal ready → `POST /ready`
 
 ### Battle Mode
@@ -151,3 +151,5 @@ curl -X POST http://localhost:3000/action \
 Connect to `ws://localhost:3000?type=bigscreen` for full arena state, or `ws://localhost:3000?type=player&player_id=p_YOURID` for player-specific state.
 
 Messages are JSON: `{ "type": "state", "data": { ... } }`
+
+For full request/response details, see `/docs/API.md`.
