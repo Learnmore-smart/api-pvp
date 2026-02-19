@@ -5,64 +5,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API PVP – Arena</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #f4f5fb;
+    --bg2:     #ffffff;
+    --bg3:     #eef0f8;
+    --border:  #d4d8ee;
+    --accent:  #5b4fcf;
+    --text:    #1e1e38;
+    --dim:     #6b7080;
+    --radius:  8px;
+  }
   html, body {
     height: 100%;
-    background: #0a0a1a;
-    color: #e0e0e0;
+    background: var(--bg);
+    color: var(--text);
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
     overflow: hidden;
   }
   body { display: flex; flex-direction: column; }
   #header {
     flex-shrink: 0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 8px 20px;
-    background: #12122a;
-    border-bottom: 2px solid #2a2a5a;
+    gap: 12px;
+    padding: 8px 18px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
-  #header h1 { font-size: 1.3em; color: #7c7cff; letter-spacing: 2px; }
   #mode-badge {
-    padding: 4px 16px;
+    padding: 3px 14px;
     border-radius: 20px;
-    font-weight: bold;
-    font-size: 0.85em;
+    font-weight: 700;
+    font-size: 0.78em;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
   }
-  .mode-test,
-  .mode-sandbox,
-  .mode-lobby    { background: #264653; color: #a8dadc; }
-  .mode-battle   { background: #9b2226; color: #ffc2c2; }
-  .mode-finished { background: #e9c46a; color: #1d1d1d; }
-  #tick-info { font-size: 0.85em; color: #888; }
-  #main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    overflow: hidden;
-  }
+  .mode-test, .mode-sandbox, .mode-lobby { background: #e0f5ec; color: #1a7a4a; }
+  .mode-battle   { background: #fde8e8; color: #9b2226; }
+  .mode-finished { background: #fef9e7; color: #7a6200; }
+  #tick-info { font-size: 0.8em; color: var(--dim); margin-left: auto; }
+  #main { flex: 1; min-height: 0; display: flex; overflow: hidden; }
   #canvas-wrap {
     flex: 1;
-    min-height: 0;
-    min-width: 0;
+    min-height: 0; min-width: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    padding: 12px;
     overflow: hidden;
+    position: relative;
   }
   canvas {
-    background: #111122;
-    border: 2px solid #2a2a5a;
-    border-radius: 6px;
+    background: #eef0fc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 12px rgba(91,79,207,0.08);
     display: block;
     max-width: 100%;
     max-height: 100%;
   }
-  /* Lobby full-canvas overlay */
   #lobby-overlay {
     display: none;
     flex-direction: column;
@@ -70,100 +74,119 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    background: #111122;
-    border: 2px solid #2a2a5a;
-    border-radius: 6px;
-    gap: 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    gap: 16px;
+    padding: 32px;
   }
-  #lobby-overlay h2 { color: #7c7cff; font-size: 1.8em; letter-spacing: 3px; }
-  #lobby-overlay .sub { color: #555; font-size: 0.9em; }
+  #lobby-overlay h2 { color: var(--accent); font-size: 2em; letter-spacing: 3px; }
+  #lobby-overlay .sub { color: var(--dim); font-size: 0.9em; }
   #lobby-player-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; }
   .lobby-card {
-    background: #1a1a35;
-    border-radius: 8px;
+    background: var(--bg3);
+    border-radius: var(--radius);
     padding: 10px 20px;
     min-width: 140px;
     text-align: center;
-    border-left: 4px solid #555;
+    border-left: 4px solid #ccc;
   }
-  .lobby-card .lname { font-weight: bold; font-size: 1em; margin-bottom: 4px; }
+  .lobby-card .lname   { font-weight: bold; font-size: 1em; margin-bottom: 4px; }
   .lobby-card .lstatus { font-size: 0.75em; }
-  .ready-yes { color: #2ecc71; }
-  .ready-no  { color: #888; }
-
+  .ready-yes { color: #1a7a4a; }
+  .ready-no  { color: var(--dim); }
   #sidebar {
-    width: 250px;
+    width: 240px;
     flex-shrink: 0;
-    background: #12122a;
-    border-left: 2px solid #2a2a5a;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
     padding: 12px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  #sidebar h2 { font-size: 1em; color: #7c7cff; border-bottom: 1px solid #2a2a5a; padding-bottom: 6px; }
+  #sidebar h2 {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
   .player-card {
-    background: #1a1a35;
+    background: var(--bg3);
     border-radius: 6px;
     padding: 8px 10px;
-    border-left: 3px solid #555;
+    border-left: 3px solid #ccc;
   }
-  .player-card.dead { opacity: 0.4; }
-  .player-name  { font-weight: bold; font-size: 0.9em; margin-bottom: 4px; }
-  .player-stat  { font-size: 0.75em; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 2px; }
-  .hp-bar       { height: 6px; background: #333; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .player-card.dead { opacity: 0.5; }
+  .pcard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .player-name  { font-weight: 600; font-size: 0.88em; }
+  .kick-btn {
+    padding: 1px 7px;
+    background: transparent;
+    color: #bbb;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.75em;
+    cursor: pointer;
+    line-height: 1.4;
+    transition: color 0.1s, border-color 0.1s;
+  }
+  .kick-btn:hover { color: #e74c3c; border-color: #e74c3c; }
+  .player-stat  { font-size: 0.72em; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: 2px; }
+  .hp-bar       { height: 5px; background: #e0e4f0; border-radius: 3px; margin-top: 3px; overflow: hidden; }
   .hp-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.15s; }
-  #controls { border-top: 1px solid #2a2a5a; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  #controls { margin-top: auto; border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   #controls button {
     padding: 8px;
-    background: #2a2a5a;
-    color: #ccc;
-    border: 1px solid #444;
-    border-radius: 4px;
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85em;
+    font-size: 0.82em;
+    transition: background 0.1s;
   }
-  #controls button:hover { background: #3a3a6a; }
-  #controls button.primary { background: #2d6a4f; border-color: #3a8; color: #b7e4c7; }
-  #controls button.primary:hover { background: #3d7a5f; }
+  #controls button:hover { background: #e0e4f0; }
+  #controls button.primary { background: #e8e6fc; color: var(--accent); border-color: #c5c0f0; font-weight: 600; }
+  #controls button.primary:hover { background: #d8d4f8; }
   #winner-banner {
     display: none;
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.93);
+    background: #fff;
     padding: 40px 60px;
     border-radius: 16px;
-    border: 3px solid #e9c46a;
+    border: 2px solid var(--accent);
+    box-shadow: 0 8px 40px rgba(91,79,207,0.2);
     text-align: center;
     z-index: 100;
   }
-  #winner-banner h2 { color: #e9c46a; font-size: 2em; margin-bottom: 10px; }
-  #winner-banner p  { color: #ccc; font-size: 1.1em; }
+  #winner-banner h2 { color: var(--accent); font-size: 2em; margin-bottom: 10px; }
+  #winner-banner p  { color: var(--dim); font-size: 1.1em; }
   #winner-banner button {
     margin-top: 16px; padding: 8px 24px;
-    background: #333; color: #ccc;
-    border: 1px solid #555; border-radius: 4px; cursor: pointer;
+    background: var(--bg3); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
   }
 </style>
 </head>
 <body>
 
 <div id="header">
-  <h1>⚔️ API PVP ARENA</h1>
   <span id="mode-badge" class="mode-lobby">LOBBY</span>
   <span id="tick-info">Tick: 0</span>
 </div>
 
 <div id="main">
   <div id="canvas-wrap">
-    <!-- Battle arena canvas -->
     <canvas id="arena" style="display:none"></canvas>
-    <!-- Lobby overlay (shown when no battle) -->
     <div id="lobby-overlay">
-      <h2>⚔️ API PVP</h2>
-      <div class="sub">Waiting for battle to start…</div>
+      <h2>API PVP</h2>
+      <div class="sub">Waiting for battle to start&hellip;</div>
       <div id="lobby-player-list"></div>
       <div class="sub" id="lobby-ready-status" style="margin-top:4px"></div>
     </div>
@@ -173,33 +196,49 @@
     <h2>Players</h2>
     <div id="player-list"></div>
     <div id="controls">
-      <button class="primary" onclick="startBattle()">▶ Start Battle</button>
-      <button onclick="resetGame()">↻ Reset to Sandbox</button>
+      <button class="primary" onclick="startBattle()">&#9654; Start Battle</button>
+      <button onclick="resetGame()">&#8635; Reset to Sandbox</button>
     </div>
   </div>
 </div>
 
 <div id="winner-banner">
-  <h2>🏆 <span id="winner-name"></span></h2>
+  <h2>&#127942; <span id="winner-name"></span></h2>
   <p id="winner-stats"></p>
   <button onclick="this.parentElement.style.display='none'">Close</button>
 </div>
 
 <script>
-const arenaCanvas = document.getElementById('arena');
-const ctx = arenaCanvas.getContext('2d');
-const CELL = 24;
+var arenaCanvas = document.getElementById('arena');
+var ctx = arenaCanvas.getContext('2d');
+var CELL = 24;
 
-let state = null;
+var P = {
+  bg:          '#eef0fc',
+  grid:        'rgba(0,0,60,0.05)',
+  arenaBorder: '#5b4fcf',
+  wallFill:    '#c0c5e8',
+  wallStroke:  '#9098c8',
+  crateFill:   '#d4a870',
+  crateStroke: '#b08840',
+  bulletFill:  '#e67e22',
+  bulletGlow:  'rgba(230,126,34,0.5)',
+  deadStroke:  '#ccc',
+  shieldRing:  'rgba(80,100,255,0.45)',
+  playerBorder:'rgba(0,0,0,0.12)',
+  playerName:  '#111',
+  hpBarBg:     '#dde1f0'
+};
 
-// ── Canvas resize — only on explicit resize, never inside render ──
+var state = null;
+
 function resizeArenaCanvas() {
-  if (!state?.arena) return;
-  const wrap = document.getElementById('canvas-wrap');
-  const a = state.arena;
-  const maxW = wrap.clientWidth  - 20;
-  const maxH = wrap.clientHeight - 20;
-  const scale = Math.min(maxW / (a.width * CELL), maxH / (a.height * CELL), 1.5);
+  if (!state || !state.arena) return;
+  var wrap = document.getElementById('canvas-wrap');
+  var a = state.arena;
+  var maxW = wrap.clientWidth  - 24;
+  var maxH = wrap.clientHeight - 24;
+  var scale = Math.min(maxW / (a.width * CELL), maxH / (a.height * CELL), 1.6);
   arenaCanvas.width  = Math.floor(a.width  * CELL * scale);
   arenaCanvas.height = Math.floor(a.height * CELL * scale);
   arenaCanvas._scale = scale;
@@ -207,27 +246,23 @@ function resizeArenaCanvas() {
 
 window.addEventListener('resize', resizeArenaCanvas);
 
-// ── WebSocket ─────────────────────────────────────────────────────
-const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-let ws;
+var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+var ws;
 
 function connectWS() {
-  ws = new WebSocket(`${wsProtocol}//${location.host}?type=bigscreen`);
-  ws.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === 'state') {
-      state = msg.data;
-      tick();
-    }
+  ws = new WebSocket(wsProtocol + '//' + location.host + '?type=bigscreen');
+  ws.onmessage = function(e) {
+    var msg = JSON.parse(e.data);
+    if (msg.type === 'state') { state = msg.data; tick(); }
   };
-  ws.onclose = () => setTimeout(connectWS, 1000);
-  ws.onerror = () => ws.close();
+  ws.onclose = function() { setTimeout(connectWS, 1000); };
+  ws.onerror = function() { ws.close(); };
 }
 connectWS();
 
 function tick() {
   updateHeader();
-  if (state.mode === 'lobby' || !state.arena) {
+  if (!state.arena || state.mode === 'lobby') {
     showLobby();
   } else {
     showArena();
@@ -236,174 +271,170 @@ function tick() {
   updateSidebar();
 }
 
-// ── Lobby view ────────────────────────────────────────────────────
 function showLobby() {
   arenaCanvas.style.display = 'none';
   document.getElementById('lobby-overlay').style.display = 'flex';
-
-  const players = state.players || [];
-  const list = document.getElementById('lobby-player-list');
-  list.innerHTML = players.map(p => `
-    <div class="lobby-card" style="border-left-color:${p.color || '#7c7cff'}">
-      <div class="lname" style="color:${p.color || '#7c7cff'}">${p.username}</div>
-      <div class="lstatus ${p.ready ? 'ready-yes' : 'ready-no'}">${p.ready ? '✓ Ready' : '○ Not ready'}</div>
-    </div>
-  `).join('') || '<div style="color:#444">No players yet</div>';
-
-  const readyCount = players.filter(p => p.ready).length;
+  var players = state.players || [];
+  var list = document.getElementById('lobby-player-list');
+  list.innerHTML = players.map(function(p) {
+    return '<div class="lobby-card" style="border-left-color:' + (p.color || '#5b4fcf') + '">' +
+      '<div class="lname" style="color:' + (p.color || '#5b4fcf') + '">' + esc(p.username) + '</div>' +
+      '<div class="lstatus ' + (p.ready ? 'ready-yes' : 'ready-no') + '">' + (p.ready ? '&#10003; Ready' : '&#9675; Not ready') + '</div>' +
+      '</div>';
+  }).join('') || '<div style="color:#aaa;font-size:0.9em">No players yet</div>';
+  var readyCount = players.filter(function(p) { return p.ready; }).length;
   document.getElementById('lobby-ready-status').textContent =
-    players.length ? `${readyCount} / ${players.length} ready` : '';
+    players.length ? (readyCount + ' / ' + players.length + ' ready') : '';
 }
 
-// ── Arena view ────────────────────────────────────────────────────
 function showArena() {
   document.getElementById('lobby-overlay').style.display = 'none';
   arenaCanvas.style.display = 'block';
   if (!arenaCanvas._scale) resizeArenaCanvas();
 }
 
-// ── Render ────────────────────────────────────────────────────────
 function render() {
-  if (!state?.arena) return;
-  const s = arenaCanvas._scale || 1;
-  const a = state.arena;
+  if (!state || !state.arena) return;
+  var s = arenaCanvas._scale || 1;
+  var a = state.arena;
 
   ctx.clearRect(0, 0, arenaCanvas.width, arenaCanvas.height);
+  ctx.fillStyle = P.bg;
+  ctx.fillRect(0, 0, arenaCanvas.width, arenaCanvas.height);
 
-  // Grid
-  ctx.strokeStyle = '#1a1a30';
+  ctx.strokeStyle = P.grid;
   ctx.lineWidth = 0.5;
-  for (let x = 0; x <= a.width; x++) {
-    ctx.beginPath();
-    ctx.moveTo(x * CELL * s, 0);
-    ctx.lineTo(x * CELL * s, a.height * CELL * s);
-    ctx.stroke();
+  for (var x = 0; x <= a.width; x++) {
+    ctx.beginPath(); ctx.moveTo(x*CELL*s,0); ctx.lineTo(x*CELL*s,a.height*CELL*s); ctx.stroke();
   }
-  for (let y = 0; y <= a.height; y++) {
-    ctx.beginPath();
-    ctx.moveTo(0, y * CELL * s);
-    ctx.lineTo(a.width * CELL * s, y * CELL * s);
-    ctx.stroke();
+  for (var y = 0; y <= a.height; y++) {
+    ctx.beginPath(); ctx.moveTo(0,y*CELL*s); ctx.lineTo(a.width*CELL*s,y*CELL*s); ctx.stroke();
   }
 
-  // Obstacles
-  for (const obs of a.obstacles) {
-    ctx.fillStyle   = obs.type === 'wall' ? '#3a3a5a' : '#5a4a2a';
-    ctx.strokeStyle = obs.type === 'wall' ? '#5a5a8a' : '#8a7a4a';
-    ctx.lineWidth   = 1;
-    ctx.fillRect  (obs.x * CELL * s, obs.y * CELL * s, obs.w * CELL * s, obs.h * CELL * s);
-    ctx.strokeRect(obs.x * CELL * s, obs.y * CELL * s, obs.w * CELL * s, obs.h * CELL * s);
+  ctx.strokeStyle = P.arenaBorder;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, a.width*CELL*s, a.height*CELL*s);
+
+  var obs;
+  for (var i = 0; i < (a.obstacles||[]).length; i++) {
+    obs = a.obstacles[i];
+    ctx.fillStyle   = obs.type === 'wall' ? P.wallFill  : P.crateFill;
+    ctx.strokeStyle = obs.type === 'wall' ? P.wallStroke : P.crateStroke;
+    ctx.lineWidth = 1;
+    ctx.fillRect  (obs.x*CELL*s, obs.y*CELL*s, obs.w*CELL*s, obs.h*CELL*s);
+    ctx.strokeRect(obs.x*CELL*s, obs.y*CELL*s, obs.w*CELL*s, obs.h*CELL*s);
   }
 
-  // Projectiles
-  for (const p of (state.projectiles || [])) {
-    const px = p.x * CELL * s;
-    const py = p.y * CELL * s;
-    ctx.fillStyle   = '#ffdd44';
-    ctx.shadowColor = '#ffdd44';
-    ctx.shadowBlur  = 6 * s;
-    ctx.beginPath();
-    ctx.arc(px, py, 3 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,221,68,0.3)';
-    ctx.lineWidth   = 2 * s;
+  var proj, px, py;
+  for (var i = 0; i < (state.projectiles||[]).length; i++) {
+    proj = state.projectiles[i];
+    px = proj.x*CELL*s; py = proj.y*CELL*s;
+    ctx.fillStyle = P.bulletFill;
+    ctx.shadowColor = P.bulletGlow;
+    ctx.shadowBlur = 8*s;
+    ctx.beginPath(); ctx.arc(px, py, 3.5*s, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = P.bulletGlow;
+    ctx.lineWidth = 2*s;
     ctx.beginPath();
     ctx.moveTo(px, py);
-    ctx.lineTo(px - p.dx * CELL * s * 0.4, py - p.dy * CELL * s * 0.4);
+    ctx.lineTo(px - proj.dx*CELL*s*0.5, py - proj.dy*CELL*s*0.5);
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
 
-  // Players
-  for (const p of (state.players || [])) {
-    const px = p.x * CELL * s;
-    const py = p.y * CELL * s;
-    const r  = 0.4 * CELL * s;
+  var p, r, bW, bH, bX, bY, hpP;
+  for (var i = 0; i < (state.players||[]).length; i++) {
+    p = state.players[i];
+    px = p.x*CELL*s; py = p.y*CELL*s;
+    r = 0.4*CELL*s;
 
     if (!p.alive) {
-      ctx.strokeStyle = '#555';
-      ctx.lineWidth   = 2;
+      ctx.strokeStyle = P.deadStroke;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(px - r*0.6, py - r*0.6); ctx.lineTo(px + r*0.6, py + r*0.6);
-      ctx.moveTo(px + r*0.6, py - r*0.6); ctx.lineTo(px - r*0.6, py + r*0.6);
+      ctx.moveTo(px-r*0.6,py-r*0.6); ctx.lineTo(px+r*0.6,py+r*0.6);
+      ctx.moveTo(px+r*0.6,py-r*0.6); ctx.lineTo(px-r*0.6,py+r*0.6);
       ctx.stroke();
       continue;
     }
 
     if (p.shielded) {
-      ctx.strokeStyle = 'rgba(100,180,255,0.7)';
-      ctx.lineWidth   = 3 * s;
-      ctx.beginPath();
-      ctx.arc(px, py, r + 4 * s, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeStyle = P.shieldRing;
+      ctx.lineWidth = 3*s;
+      ctx.beginPath(); ctx.arc(px, py, r+5*s, 0, Math.PI*2); ctx.stroke();
     }
 
-    ctx.fillStyle = p.color || '#3498db';
-    ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = p.color || '#5b4fcf';
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = P.playerBorder;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth   = 1.5;
-    ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.fillStyle = P.playerName;
+    ctx.font = '600 ' + Math.max(9, Math.round(11*s)) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.username, px, py - r - 6*s);
 
-    ctx.fillStyle  = '#fff';
-    ctx.font       = `${Math.max(9, 11 * s)}px sans-serif`;
-    ctx.textAlign  = 'center';
-    ctx.fillText(p.username, px, py - r - 6 * s);
-
-    const bW = r * 2.2, bH = 3 * s;
-    const bX = px - bW / 2, bY = py + r + 4 * s;
-    ctx.fillStyle = '#333';
+    bW = r*2.4; bH = 4*s;
+    bX = px - bW/2; bY = py + r + 5*s;
+    ctx.fillStyle = P.hpBarBg;
     ctx.fillRect(bX, bY, bW, bH);
-    const hpP = p.hp / 100;
-    ctx.fillStyle = hpP > 0.5 ? '#2ecc71' : hpP > 0.25 ? '#f1c40f' : '#e74c3c';
-    ctx.fillRect(bX, bY, bW * hpP, bH);
+    hpP = (p.hp||0)/100;
+    ctx.fillStyle = hpP>0.5 ? '#2ecc71' : hpP>0.25 ? '#f39c12' : '#e74c3c';
+    ctx.fillRect(bX, bY, bW*hpP, bH);
   }
 
-  // Winner
   if (state.mode === 'finished' && state.winner) {
-    const b = document.getElementById('winner-banner');
     document.getElementById('winner-name').textContent  = state.winner.username + ' Wins!';
-    document.getElementById('winner-stats').textContent = `HP: ${state.winner.hp}  |  Kills: ${state.winner.kills}`;
-    b.style.display = 'block';
+    document.getElementById('winner-stats').textContent = 'HP: ' + state.winner.hp + '  |  Kills: ' + state.winner.kills;
+    document.getElementById('winner-banner').style.display = 'block';
   }
 }
 
-// ── Header + sidebar ──────────────────────────────────────────────
 function updateHeader() {
-  const badge = document.getElementById('mode-badge');
+  var badge = document.getElementById('mode-badge');
   badge.textContent = state.mode.toUpperCase();
-  badge.className   = `mode-${state.mode}`;
-  document.getElementById('tick-info').textContent = `Tick: ${state.tick}`;
+  badge.className   = 'mode-' + state.mode;
+  document.getElementById('tick-info').textContent = 'Tick: ' + (state.tick || 0);
 }
 
 function updateSidebar() {
-  const players = (state.players || []).slice().sort((a, b) => b.hp - a.hp);
-  document.getElementById('player-list').innerHTML = players.map(p => `
-    <div class="player-card ${p.alive === false ? 'dead' : ''}" style="border-left-color:${p.color || '#555'}">
-      <div class="player-name" style="color:${p.color || '#ccc'}">${p.username} ${p.shielded ? '🛡️' : ''}</div>
-      <div class="player-stat"><span>HP</span><span>${p.hp ?? 100}/100</span></div>
-      <div class="hp-bar"><div class="hp-bar-fill" style="width:${p.hp ?? 100}%;background:${(p.hp??100) > 50 ? '#2ecc71' : (p.hp??100) > 25 ? '#f1c40f' : '#e74c3c'}"></div></div>
-      <div class="player-stat"><span>Ammo</span><span>${p.ammo ?? '—'}</span></div>
-      <div class="player-stat"><span>Energy</span><span>${p.energy ?? '—'}</span></div>
-      <div class="player-stat"><span>Ready</span><span>${p.ready ? '✓' : '—'}</span></div>
-      ${p.alive === false ? '<div style="color:#e74c3c;font-size:0.75em;margin-top:3px">☠ ELIMINATED</div>' : ''}
-    </div>
-  `).join('');
+  var players = (state.players || []).slice().sort(function(a,b){ return (b.hp||0)-(a.hp||0); });
+  document.getElementById('player-list').innerHTML = players.map(function(p) {
+    var hp = p.hp != null ? p.hp : 100;
+    var hpColor = hp>50 ? '#2ecc71' : hp>25 ? '#f39c12' : '#e74c3c';
+    return '<div class="player-card ' + (p.alive===false?'dead':'') + '" style="border-left-color:' + (p.color||'#ccc') + '">' +
+      '<div class="pcard-header">' +
+        '<div class="player-name" style="color:' + (p.color||'#333') + '">' + esc(p.username) + (p.shielded?' &#128737;':'') + '</div>' +
+        '<button class="kick-btn" onclick="kickPlayer(\'' + p.id + '\')">&#10005;</button>' +
+      '</div>' +
+      '<div class="player-stat"><span>HP</span><span>' + hp + '/100</span></div>' +
+      '<div class="hp-bar"><div class="hp-bar-fill" style="width:' + hp + '%;background:' + hpColor + '"></div></div>' +
+      '<div class="player-stat"><span>Ammo</span><span>' + (p.ammo!=null?p.ammo:'&mdash;') + '</span></div>' +
+      '<div class="player-stat"><span>Energy</span><span>' + (p.energy!=null?p.energy:'&mdash;') + '</span></div>' +
+      '<div class="player-stat"><span>Kills</span><span>' + (p.kills||0) + '</span></div>' +
+      (p.alive===false?'<div style="color:#e74c3c;font-size:0.72em;margin-top:3px">&#9760; Eliminated</div>':'') +
+      '</div>';
+  }).join('');
 }
 
-// ── Controls ──────────────────────────────────────────────────────
-async function startBattle() {
-  await fetch('/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+function startBattle() {
+  fetch('/start', { method: 'POST', headers: {'Content-Type':'application/json'} });
 }
 
-async function resetGame() {
+function resetGame() {
   document.getElementById('winner-banner').style.display = 'none';
-  await fetch('/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-  arenaCanvas._scale = null; // force re-measure on next arena render
+  arenaCanvas._scale = null;
+  fetch('/reset', { method: 'POST', headers: {'Content-Type':'application/json'} });
+}
+
+function kickPlayer(id) {
+  if (!confirm('Remove this player from the game?')) return;
+  fetch('/player/' + id, { method: 'DELETE' });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>

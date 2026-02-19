@@ -22,6 +22,7 @@ class SandboxManager {
 
     const { player } = result;
     this.sandboxes.set(player.id, engine);
+    engine.startSandbox(); // run a tick loop so projectiles move autonomously
     return { playerId: player.id, player, engine };
   }
 

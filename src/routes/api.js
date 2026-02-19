@@ -50,7 +50,7 @@ module.exports = function createApiRouter(context) {
   // ── POST /action ─────────────────────────────
   // Routes to the player's sandbox or to the battle engine, whichever is active.
   router.post('/action', (req, res) => {
-    const { player_id, action, direction } = req.body;
+    const { player_id, action, direction, angle } = req.body;
 
     if (!player_id) return res.status(400).json({ error: 'player_id is required' });
     if (!action)    return res.status(400).json({ error: 'action is required' });
@@ -64,7 +64,8 @@ module.exports = function createApiRouter(context) {
       return res.status(503).json({ error: 'No active game session' });
     }
 
-    const result = engine.submitAction(player_id, action, direction);
+    const parsedAngle = typeof angle === 'number' ? angle : null;
+    const result = engine.submitAction(player_id, action, direction, parsedAngle);
     if (result.error) return res.status(400).json(result);
 
     const state = engine.getPlayerState(player_id);

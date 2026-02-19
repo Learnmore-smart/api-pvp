@@ -49,7 +49,7 @@ class GameEngine {
 
   // ── Action Handling ────────────────────────────
 
-  submitAction(playerId, action, direction) {
+  submitAction(playerId, action, direction, angle = null) {
     const player = this.players.get(playerId);
     if (!player || !player.alive) return { error: 'Invalid player or player is dead' };
 
@@ -59,24 +59,20 @@ class GameEngine {
       return { error: `Invalid action: ${action}` };
     }
 
-    // Validate direction for directional actions
+    // Validate direction for directional actions — accept named direction OR numeric angle
     if (['move', 'shoot', 'dash'].includes(action)) {
-      if (!direction || !C.DIRECTIONS[direction]) {
-        return { error: `Invalid direction: ${direction}` };
+      const hasAngle     = typeof angle === 'number' && isFinite(angle);
+      const hasDirection = direction && C.DIRECTIONS[direction];
+      if (!hasAngle && !hasDirection) {
+        return { error: `Provide direction (up/down/left/right) or angle in degrees (0–360) for '${action}'` };
       }
     }
 
-    // Queue action (latest action wins if multiple per tick)
-    player.pendingAction = { action, direction };
+    // Normalise angle to [0, 360)
+    if (typeof angle === 'number') angle = ((angle % 360) + 360) % 360;
 
-    // In test mode, process immediately (no tick loop running)
-    if (this.mode === C.MODE_TEST) {
-      this._processActions();
-      this._moveProjectiles();
-      this._checkProjectileCollisions();
-      this._checkProjectileWallCollisions();
-      this._cleanupProjectiles();
-    }
+    // Queue action — tick loop processes it (both battle and sandbox run a tick loop)
+    player.pendingAction = { action, direction, angle };
 
     return { success: true };
   }
@@ -115,6 +111,11 @@ class GameEngine {
     this._startTickLoop();
 
     return { success: true, message: 'Battle started!' };
+  }
+
+  startSandbox() {
+    this.mode = C.MODE_TEST;
+    this._startTickLoop();
   }
 
   stopBattle() {
@@ -177,44 +178,40 @@ class GameEngine {
     for (const player of this.players.values()) {
       if (!player.alive || !player.pendingAction) continue;
 
-      const { action, direction } = player.pendingAction;
+      const { action, direction, angle } = player.pendingAction;
       player.pendingAction = null;
 
       switch (action) {
-        case 'move':
-          this._handleMove(player, direction);
-          break;
-        case 'shoot':
-          this._handleShoot(player, direction);
-          break;
-        case 'reload':
-          this._handleReload(player);
-          break;
-        case 'shield':
-          this._handleShield(player);
-          break;
-        case 'dash':
-          this._handleDash(player, direction);
-          break;
+        case 'move':   this._handleMove(player, direction, angle);   break;
+        case 'shoot':  this._handleShoot(player, direction, angle);  break;
+        case 'reload': this._handleReload(player);                   break;
+        case 'shield': this._handleShield(player);                   break;
+        case 'dash':   this._handleDash(player, direction, angle);   break;
       }
     }
   }
 
-  _handleMove(player, direction) {
-    const dir = C.DIRECTIONS[direction];
-    if (!dir) return;
+  _handleMove(player, direction, angle = null) {
+    let dx, dy;
+    if (typeof angle === 'number') {
+      const rad = (angle * Math.PI) / 180;
+      dx = Math.cos(rad);
+      dy = Math.sin(rad);
+    } else {
+      const dir = C.DIRECTIONS[direction];
+      if (!dir) return;
+      dx = dir.x;
+      dy = dir.y;
+    }
 
-    const newX = player.x + dir.x * C.PLAYER_SPEED;
-    const newY = player.y + dir.y * C.PLAYER_SPEED;
+    const newX = player.x + dx * C.PLAYER_SPEED;
+    const newY = player.y + dy * C.PLAYER_SPEED;
 
-    // Check collision with arena bounds and obstacles
     if (!this.arena.isBlocked(newX, newY, player.size)) {
-      // Check collision with other players
       let blocked = false;
       for (const other of this.players.values()) {
         if (other.id === player.id || !other.alive) continue;
-        const dist = Math.hypot(newX - other.x, newY - other.y);
-        if (dist < player.size + other.size) {
+        if (Math.hypot(newX - other.x, newY - other.y) < player.size + other.size) {
           blocked = true;
           break;
         }
@@ -226,27 +223,39 @@ class GameEngine {
     }
   }
 
-  _handleShoot(player, direction) {
+  _handleShoot(player, direction, angle = null) {
     if (player.ammo <= 0) return;
     if (player.isReloading) return;
 
-    // Check max bullets
     let bulletCount = 0;
     for (const p of this.projectiles.values()) {
       if (p.ownerId === player.id && p.alive) bulletCount++;
     }
     if (bulletCount >= C.MAX_BULLETS_PER_PLAYER) return;
 
-    const dir = C.DIRECTIONS[direction];
-    if (!dir) return;
+    let dx, dy;
+    if (typeof angle === 'number') {
+      const rad = (angle * Math.PI) / 180;
+      dx = Math.cos(rad);
+      dy = Math.sin(rad);
+    } else {
+      const dir = C.DIRECTIONS[direction];
+      if (!dir) return;
+      dx = dir.x;
+      dy = dir.y;
+    }
+
+    // Normalise to unit vector
+    const len = Math.hypot(dx, dy);
+    dx /= len;
+    dy /= len;
 
     player.ammo--;
 
     const id = 'b_' + uuidv4().slice(0, 8);
-    // Spawn bullet slightly in front of player
-    const spawnX = player.x + dir.x * (player.size + 0.2);
-    const spawnY = player.y + dir.y * (player.size + 0.2);
-    const projectile = new Projectile(id, player.id, spawnX, spawnY, dir.x, dir.y);
+    const spawnX = player.x + dx * (player.size + 0.2);
+    const spawnY = player.y + dy * (player.size + 0.2);
+    const projectile = new Projectile(id, player.id, spawnX, spawnY, dx, dy);
     this.projectiles.set(id, projectile);
   }
 
@@ -263,17 +272,27 @@ class GameEngine {
     player.shieldTicks = C.SHIELD_DURATION_TICKS;
   }
 
-  _handleDash(player, direction) {
+  _handleDash(player, direction, angle = null) {
     if (player.energy < C.DASH_ENERGY_COST) return;
-    const dir = C.DIRECTIONS[direction];
-    if (!dir) return;
+
+    let dx, dy;
+    if (typeof angle === 'number') {
+      const rad = (angle * Math.PI) / 180;
+      const len = Math.hypot(Math.cos(rad), Math.sin(rad));
+      dx = Math.cos(rad) / len;
+      dy = Math.sin(rad) / len;
+    } else {
+      const dir = C.DIRECTIONS[direction];
+      if (!dir) return;
+      dx = dir.x;
+      dy = dir.y;
+    }
 
     player.energy -= C.DASH_ENERGY_COST;
 
-    // Move multiple units, stopping at first collision
     for (let step = 1; step <= C.DASH_DISTANCE; step++) {
-      const newX = player.x + dir.x;
-      const newY = player.y + dir.y;
+      const newX = player.x + dx;
+      const newY = player.y + dy;
       if (this.arena.isBlocked(newX, newY, player.size)) break;
 
       let blocked = false;

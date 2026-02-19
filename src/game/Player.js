@@ -93,14 +93,16 @@ class Player {
     return {
       id: this.id,
       username: this.username,
-      x: this.x,
-      y: this.y,
+      x: Math.round(this.x * 100) / 100,
+      y: Math.round(this.y * 100) / 100,
       hp: this.hp,
       energy: this.energy,
       ammo: this.ammo,
       alive: this.alive,
       shielded: this.isShielded,
       reloading: this.isReloading,
+      reloadCooldown: this.reloadCooldown,
+      shieldTicks: this.shieldTicks,
       kills: this.kills,
       color: this.color,
     };
