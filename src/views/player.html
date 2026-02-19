@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API PVP – Player Monitor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+  }
+  body { display: flex; flex-direction: column; }
+
+  /* ── Setup screen ── */
+  #setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    padding: 20px;
+  }
+  #setup h1 { color: #7c7cff; margin-bottom: 10px; letter-spacing: 2px; }
+  #setup p  { color: #555; font-size: 0.85em; max-width: 320px; text-align: center; }
+  #setup input, #setup button {
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid #444;
+    width: 300px;
+  }
+  #setup input { background: #1a1a35; color: #eee; }
+  #setup input::placeholder { color: #555; }
+  #setup button { background: #2d6a4f; color: #b7e4c7; cursor: pointer; border: none; }
+  #setup button:hover { background: #3d7a5f; }
+  #setup .alt-btn { background: #264653; color: #a8dadc; }
+  #setup .alt-btn:hover { background: #345663; }
+  #setup .divider { color: #333; font-size: 0.8em; }
+  #setup .error { color: #e74c3c; font-size: 0.85em; min-height: 1.2em; }
+
+  /* ── Game view — fixed layout, no overflow ── */
+  #game-view {
+    display: none;
+    flex-direction: column;
+    height: 100%;        /* fill viewport */
+    overflow: hidden;    /* hard stop: nothing may push past the viewport */
+  }
+
+  /* Top bar */
+  #top-bar {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #12122a;
+    border-bottom: 2px solid #2a2a5a;
+    gap: 12px;
+  }
+  #top-bar .name { font-weight: bold; color: #7c7cff; font-size: 1.1em; white-space: nowrap; }
+  #stats { display: flex; gap: 10px; }
+  .stat-box {
+    text-align: center;
+    padding: 4px 12px;
+    background: #1a1a35;
+    border-radius: 6px;
+    min-width: 64px;
+  }
+  .stat-box .label { color: #888; font-size: 0.65em; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-box .value { font-size: 1.15em; font-weight: bold; }
+  .stat-hp     { color: #2ecc71; }
+  .stat-ammo   { color: #f1c40f; }
+  .stat-energy { color: #3498db; }
+  .stat-kills  { color: #e74c3c; }
+  #mode-label {
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 0.78em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Canvas area — fills ALL remaining vertical space */
+  #canvas-area {
+    flex: 1;
+    min-height: 0;      /* ← KEY: prevents flex child from expanding beyond container */
+    overflow: hidden;   /* ← belt-and-suspenders: canvas never bleeds out */
+    position: relative; /* canvas is absolute inside */
+    background: #0a0a1a;
+  }
+  #viewport {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #111122;
+    border: 2px solid #2a2a5a;
+    border-radius: 6px;
+    display: block;
+  }
+
+  /* Status log */
+  #status-log {
+    flex-shrink: 0;
+    height: 52px;
+    overflow: hidden;
+    background: #0d0d1a;
+    border-top: 1px solid #2a2a5a;
+    padding: 4px 12px;
+    font-size: 0.7em;
+    color: #555;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1px;
+  }
+  .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-ok   { color: #4a8; }
+  .log-warn { color: #fa0; }
+  .log-err  { color: #e55; }
+</style>
+</head>
+<body>
+
+<!-- ── Setup screen ─────────────────────────────────────────────── -->
+<div id="setup">
+  <h1>🎮 Player Monitor</h1>
+  <p>Enter your <strong>Player ID</strong> to watch your character. Run your API client separately to control it.</p>
+
+  <input id="join-id" placeholder="Player ID  (p_xxxxxxxx)" />
+  <button onclick="joinExisting()">Connect to My Monitor</button>
+
+  <div class="divider">— or register a new player —</div>
+
+  <input id="join-name" placeholder="Username" maxlength="20" />
+  <button class="alt-btn" onclick="register()">Register & Watch</button>
+
+  <div id="setup-error" class="error"></div>
+</div>
+
+<!-- ── Game view ─────────────────────────────────────────────────── -->
+<div id="game-view">
+  <div id="top-bar">
+    <span class="name" id="player-name">Player</span>
+    <div id="stats">
+      <div class="stat-box"><div class="label">HP</div><div class="value stat-hp"     id="s-hp">100</div></div>
+      <div class="stat-box"><div class="label">Ammo</div><div class="value stat-ammo"   id="s-ammo">5</div></div>
+      <div class="stat-box"><div class="label">Energy</div><div class="value stat-energy" id="s-energy">25</div></div>
+      <div class="stat-box"><div class="label">Kills</div><div class="value stat-kills"  id="s-kills">0</div></div>
+    </div>
+    <span id="mode-label">SANDBOX</span>
+  </div>
+
+  <div id="canvas-area">
+    <canvas id="viewport"></canvas>
+  </div>
+
+  <div id="status-log">
+    <div class="log-line log-ok">Connecting…</div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+let playerId   = null;
+let playerName = '';
+let playerState = null;
+let ws = null;
+
+const canvas = document.getElementById('viewport');
+const ctx    = canvas.getContext('2d');
+const CELL   = 26;  // px per arena unit in the zoomed viewport
+
+// ── Canvas sizing — ONLY on resize events, never inside render ───
+function resizeCanvas() {
+  const area = document.getElementById('canvas-area');
+  if (!area || area.style.display === 'none') return;
+  const w = Math.max(100, area.clientWidth  - 4);
+  const h = Math.max(100, area.clientHeight - 4);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width  = w;
+    canvas.height = h;
+  }
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ── Registration / connect ───────────────────────────────────────
+async function register() {
+  const username = document.getElementById('join-name').value.trim();
+  if (!username) return showError('Enter a username');
+
+  try {
+    const res  = await fetch('/register', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ username }),
+    });
+    const data = await res.json();
+    if (data.error) return showError(data.error);
+
+    playerId   = data.player_id;
+    playerName = data.username;
+    enterGame();
+  } catch (e) {
+    showError('Connection failed');
+  }
+}
+
+async function joinExisting() {
+  const id = document.getElementById('join-id').value.trim();
+  if (!id) return showError('Enter a Player ID');
+
+  try {
+    const res  = await fetch(`/state?player_id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    if (data.error) return showError('Player not found');
+
+    playerId   = id;
+    playerName = data.self?.username || id;
+    enterGame();
+  } catch (e) {
+    showError('Player not found');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('setup-error').textContent = msg;
+}
+
+function enterGame() {
+  document.getElementById('setup').style.display    = 'none';
+  const gv = document.getElementById('game-view');
+  gv.style.display = 'flex';
+  document.getElementById('player-name').textContent = playerName;
+
+  // Measure once the DOM has settled, then connect
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    connectWS();
+  });
+}
+
+// ── WebSocket ────────────────────────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}?type=player&player_id=${encodeURIComponent(playerId)}`);
+
+  ws.onopen  = () => addLog('Connected to server', 'ok');
+  ws.onclose = () => { addLog('Disconnected — reconnecting…', 'warn'); setTimeout(connectWS, 1200); };
+  ws.onerror = () => ws.close();
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') {
+      playerState = msg.data;
+      updateHUD();
+      renderViewport();
+    }
+  };
+}
+
+// ── HUD ──────────────────────────────────────────────────────────
+function updateHUD() {
+  if (!playerState?.self) return;
+  const s = playerState.self;
+
+  document.getElementById('s-hp').textContent     = s.hp;
+  document.getElementById('s-ammo').textContent   = s.ammo;
+  document.getElementById('s-energy').textContent = s.energy;
+  document.getElementById('s-kills').textContent  = s.kills;
+
+  const hpEl = document.getElementById('s-hp');
+  hpEl.style.color = s.hp > 50 ? '#2ecc71' : s.hp > 25 ? '#f1c40f' : '#e74c3c';
+
+  const modeEl = document.getElementById('mode-label');
+  const modeMap = {
+    test:     ['SANDBOX',  '#2d6a4f', '#b7e4c7'],
+    sandbox:  ['SANDBOX',  '#2d6a4f', '#b7e4c7'],
+    lobby:    ['LOBBY',    '#264653', '#a8dadc'],
+    battle:   ['BATTLE',   '#9b2226', '#ffc2c2'],
+    finished: ['FINISHED', '#7a6a00', '#ffe97a'],
+  };
+  const [label, bg, fg] = modeMap[playerState.mode] || ['—', '#333', '#aaa'];
+  modeEl.textContent       = label;
+  modeEl.style.background  = bg;
+  modeEl.style.color       = fg;
+}
+
+// ── Viewport renderer — NEVER touches canvas.width / canvas.height ──
+function renderViewport() {
+  if (!playerState?.self) return;
+
+  const self  = playerState.self;
+  const arena = playerState.arena;
+  const W = canvas.width;
+  const H = canvas.height;
+  const cx = W / 2;
+  const cy = H / 2;
+
+  // Camera offset: keep self at viewport centre
+  const oX = cx - self.x * CELL;
+  const oY = cy - self.y * CELL;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Arena background
+  if (arena) {
+    ctx.fillStyle = '#0e0e20';
+    ctx.fillRect(
+      Math.max(0, oX),
+      Math.max(0, oY),
+      Math.min(arena.width  * CELL, W),
+      Math.min(arena.height * CELL, H),
+    );
+
+    // Grid lines
+    ctx.strokeStyle = '#1a1a30';
+    ctx.lineWidth   = 0.5;
+    const x0 = Math.max(0, Math.floor(-oX / CELL));
+    const x1 = Math.min(arena.width,  Math.ceil((W - oX) / CELL));
+    const y0 = Math.max(0, Math.floor(-oY / CELL));
+    const y1 = Math.min(arena.height, Math.ceil((H - oY) / CELL));
+    for (let x = x0; x <= x1; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * CELL + oX, y0 * CELL + oY);
+      ctx.lineTo(x * CELL + oX, y1 * CELL + oY);
+      ctx.stroke();
+    }
+    for (let y = y0; y <= y1; y++) {
+      ctx.beginPath();
+      ctx.moveTo(x0 * CELL + oX, y * CELL + oY);
+      ctx.lineTo(x1 * CELL + oX, y * CELL + oY);
+      ctx.stroke();
+    }
+
+    // Arena border
+    ctx.strokeStyle = '#4a4a8a';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(oX, oY, arena.width * CELL, arena.height * CELL);
+
+    // Obstacles
+    for (const obs of arena.obstacles) {
+      const rx = obs.x * CELL + oX;
+      const ry = obs.y * CELL + oY;
+      const rw = obs.w * CELL;
+      const rh = obs.h * CELL;
+      if (rx + rw < 0 || rx > W || ry + rh < 0 || ry > H) continue;
+      ctx.fillStyle   = obs.type === 'wall' ? '#3a3a5a' : '#5a4a2a';
+      ctx.strokeStyle = obs.type === 'wall' ? '#5a5a8a' : '#8a7a4a';
+      ctx.lineWidth   = 1;
+      ctx.fillRect(rx, ry, rw, rh);
+      ctx.strokeRect(rx, ry, rw, rh);
+    }
+  }
+
+  // Projectiles
+  for (const p of (playerState.nearbyProjectiles || [])) {
+    const px = p.x * CELL + oX;
+    const py = p.y * CELL + oY;
+    const isMine = p.ownerId === playerId;
+    ctx.fillStyle   = isMine ? '#44ff88' : '#ffdd44';
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = isMine ? 'rgba(68,255,136,0.3)' : 'rgba(255,221,68,0.3)';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - p.dx * CELL * 0.5, py - p.dy * CELL * 0.5);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Other players
+  for (const p of (playerState.nearbyPlayers || [])) drawPlayer(p, oX, oY, false);
+
+  // Self (drawn on top)
+  drawPlayer(self, oX, oY, true);
+
+  // Faint crosshair centred on self
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([4, 10]);
+  ctx.beginPath();
+  ctx.moveTo(cx, 0); ctx.lineTo(cx, H);
+  ctx.moveTo(0, cy); ctx.lineTo(W, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawPlayer(p, oX, oY, isSelf) {
+  const px = p.x * CELL + oX;
+  const py = p.y * CELL + oY;
+  const r  = 0.4 * CELL;
+
+  if (!p.alive) {
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(px - r * 0.6, py - r * 0.6); ctx.lineTo(px + r * 0.6, py + r * 0.6);
+    ctx.moveTo(px + r * 0.6, py - r * 0.6); ctx.lineTo(px - r * 0.6, py + r * 0.6);
+    ctx.stroke();
+    return;
+  }
+
+  // Shield ring
+  if (p.shielded) {
+    ctx.strokeStyle = 'rgba(100,180,255,0.7)';
+    ctx.lineWidth   = 3;
+    ctx.beginPath();
+    ctx.arc(px, py, r + 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Body
+  ctx.fillStyle = isSelf ? '#44aaff' : (p.color || '#e74c3c');
+  if (isSelf) { ctx.shadowColor = '#44aaff'; ctx.shadowBlur = 12; }
+  ctx.beginPath();
+  ctx.arc(px, py, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur  = 0;
+  ctx.strokeStyle = isSelf ? 'rgba(68,170,255,0.5)' : 'rgba(255,255,255,0.15)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.arc(px, py, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle  = '#fff';
+  ctx.font       = '11px sans-serif';
+  ctx.textAlign  = 'center';
+  ctx.fillText(isSelf ? 'YOU' : p.username, px, py - r - 6);
+
+  // HP bar
+  const bW = r * 2.4;
+  const bH = 4;
+  const bX = px - bW / 2;
+  const bY = py + r + 5;
+  ctx.fillStyle = '#333';
+  ctx.fillRect(bX, bY, bW, bH);
+  const pct = p.hp / 100;
+  ctx.fillStyle = pct > 0.5 ? '#2ecc71' : pct > 0.25 ? '#f1c40f' : '#e74c3c';
+  ctx.fillRect(bX, bY, bW * pct, bH);
+}
+
+// ── Status log ───────────────────────────────────────────────────
+const MAX_LOG = 4;
+function addLog(msg, type = 'ok') {
+  const log  = document.getElementById('status-log');
+  const line = document.createElement('div');
+  line.className   = `log-line log-${type}`;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  log.prepend(line);
+  while (log.children.length > MAX_LOG) log.removeChild(log.lastChild);
+}
+</script>
+</body>
+</html>
