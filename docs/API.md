@@ -179,28 +179,6 @@ Returns (`200`):
 }
 ```
 
-### `POST /start`
-
-Starts shared battle arena using all registered players.
-
-Returns (`200`):
-
-```json
-{ "success": true, "message": "Battle started!" }
-```
-
-Returns (`400`) when battle is active or no players are registered.
-
-### `POST /reset`
-
-Stops battle and resets all players to private sandbox state.
-
-Returns (`200`):
-
-```json
-{ "success": true, "message": "Reset complete. All players are back in their sandboxes." }
-```
-
 ---
 
 ## 6. Player Management / Debug
