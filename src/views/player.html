@@ -434,7 +434,7 @@ function renderViewport(ts) {
 function drawPlayer(p, oX, oY, isSelf) {
   const px = p.x * CELL + oX;
   const py = p.y * CELL + oY;
-  const r  = 0.4 * CELL;
+  const r  = 0.5 * CELL;
 
   if (!p.alive) {
     ctx.strokeStyle = '#ccc';

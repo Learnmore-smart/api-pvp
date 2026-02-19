@@ -380,7 +380,7 @@ function render(ts) {
     p = state.players[i];
     rp = renderPositions[p.id] || p;
     px = rp.x*CELL*s; py = rp.y*CELL*s;
-    r = 0.4*CELL*s;
+    r = 0.5*CELL*s;
 
     if (!p.alive) {
       ctx.strokeStyle = P.deadStroke;
