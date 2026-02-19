@@ -8,7 +8,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     height: 100%;
-    background: #0a0a1a;
+    background: #1a1432;
     color: #e0e0e0;
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     overflow: hidden;
@@ -25,7 +25,7 @@
     gap: 12px;
     padding: 20px;
   }
-  #setup h1 { color: #7c7cff; margin-bottom: 10px; letter-spacing: 2px; }
+  #setup h1 { color: #00e5cc; margin-bottom: 10px; letter-spacing: 2px; }
   #setup p  { color: #555; font-size: 0.85em; max-width: 320px; text-align: center; }
   #setup input, #setup button {
     padding: 10px 20px;
@@ -34,12 +34,12 @@
     border: 1px solid #444;
     width: 300px;
   }
-  #setup input { background: #1a1a35; color: #eee; }
-  #setup input::placeholder { color: #555; }
-  #setup button { background: #2d6a4f; color: #b7e4c7; cursor: pointer; border: none; }
-  #setup button:hover { background: #3d7a5f; }
-  #setup .alt-btn { background: #264653; color: #a8dadc; }
-  #setup .alt-btn:hover { background: #345663; }
+  #setup input { background: #2d1b4e; color: #eee; }
+  #setup input::placeholder { color: #777; }
+  #setup button { background: #00e5cc; color: #1a1432; cursor: pointer; border: none; font-weight: 600; }
+  #setup button:hover { background: #00d4ff; }
+  #setup .alt-btn { background: #b537f2; color: #fff; }
+  #setup .alt-btn:hover { background: #c554ff; }
   #setup .divider { color: #333; font-size: 0.8em; }
   #setup .error { color: #e74c3c; font-size: 0.85em; min-height: 1.2em; }
 
@@ -58,25 +58,26 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 16px;
-    background: #12122a;
-    border-bottom: 2px solid #2a2a5a;
+    background: #2d1b4e;
+    border-bottom: 2px solid #b537f2;
     gap: 12px;
   }
-  #top-bar .name { font-weight: bold; color: #7c7cff; font-size: 1.1em; white-space: nowrap; }
+  #top-bar .name { font-weight: bold; color: #00e5cc; font-size: 1.1em; white-space: nowrap; }
   #stats { display: flex; gap: 10px; }
   .stat-box {
     text-align: center;
     padding: 4px 12px;
-    background: #1a1a35;
+    background: #1a1432;
     border-radius: 6px;
     min-width: 64px;
+    border: 1px solid #3d2864;
   }
-  .stat-box .label { color: #888; font-size: 0.65em; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-box .label { color: #999; font-size: 0.65em; text-transform: uppercase; letter-spacing: 1px; }
   .stat-box .value { font-size: 1.15em; font-weight: bold; }
-  .stat-hp     { color: #2ecc71; }
-  .stat-ammo   { color: #f1c40f; }
-  .stat-energy { color: #3498db; }
-  .stat-kills  { color: #e74c3c; }
+  .stat-hp     { color: #00e5cc; }
+  .stat-ammo   { color: #ffd93d; }
+  .stat-energy { color: #00d4ff; }
+  .stat-kills  { color: #ff6bcb; }
   #mode-label {
     padding: 3px 12px;
     border-radius: 12px;
@@ -86,6 +87,7 @@
     letter-spacing: 1px;
     white-space: nowrap;
     flex-shrink: 0;
+    border: 1px solid;
   }
 
   /* Canvas area — fills ALL remaining vertical space */
@@ -94,15 +96,15 @@
     min-height: 0;      /* ← KEY: prevents flex child from expanding beyond container */
     overflow: hidden;   /* ← belt-and-suspenders: canvas never bleeds out */
     position: relative; /* canvas is absolute inside */
-    background: #0a0a1a;
+    background: #1a1432;
   }
   #viewport {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #111122;
-    border: 2px solid #2a2a5a;
+    background: #0e0a1e;
+    border: 2px solid #b537f2;
     border-radius: 6px;
     display: block;
   }
@@ -112,19 +114,19 @@
     flex-shrink: 0;
     height: 52px;
     overflow: hidden;
-    background: #0d0d1a;
-    border-top: 1px solid #2a2a5a;
+    background: #0e0a1e;
+    border-top: 1px solid #b537f2;
     padding: 4px 12px;
     font-size: 0.7em;
-    color: #555;
+    color: #777;
     display: flex;
     flex-direction: column-reverse;
     gap: 1px;
   }
   .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .log-ok   { color: #4a8; }
-  .log-warn { color: #fa0; }
-  .log-err  { color: #e55; }
+  .log-ok   { color: #00e5cc; }
+  .log-warn { color: #ffd93d; }
+  .log-err  { color: #ff6bcb; }
 </style>
 </head>
 <body>
@@ -278,20 +280,21 @@ function updateHUD() {
   document.getElementById('s-kills').textContent  = s.kills;
 
   const hpEl = document.getElementById('s-hp');
-  hpEl.style.color = s.hp > 50 ? '#2ecc71' : s.hp > 25 ? '#f1c40f' : '#e74c3c';
+  hpEl.style.color = s.hp > 50 ? '#00e5cc' : s.hp > 25 ? '#ffd93d' : '#ff6bcb';
 
   const modeEl = document.getElementById('mode-label');
   const modeMap = {
-    test:     ['SANDBOX',  '#2d6a4f', '#b7e4c7'],
-    sandbox:  ['SANDBOX',  '#2d6a4f', '#b7e4c7'],
-    lobby:    ['LOBBY',    '#264653', '#a8dadc'],
-    battle:   ['BATTLE',   '#9b2226', '#ffc2c2'],
-    finished: ['FINISHED', '#7a6a00', '#ffe97a'],
+    test:     ['SANDBOX',  '#00e5cc', '#1a1432', '#00e5cc'],
+    sandbox:  ['SANDBOX',  '#00e5cc', '#1a1432', '#00e5cc'],
+    lobby:    ['LOBBY',    '#00d4ff', '#1a1432', '#00d4ff'],
+    battle:   ['BATTLE',   '#ff6bcb', '#1a1432', '#ff6bcb'],
+    finished: ['FINISHED', '#ffd93d', '#1a1432', '#ffd93d'],
   };
-  const [label, bg, fg] = modeMap[playerState.mode] || ['—', '#333', '#aaa'];
+  const [label, bg, fg, borderColor] = modeMap[playerState.mode] || ['—', '#333', '#aaa', '#333'];
   modeEl.textContent       = label;
   modeEl.style.background  = bg;
   modeEl.style.color       = fg;
+  modeEl.style.borderColor = borderColor;
 }
 
 // ── Viewport renderer — NEVER touches canvas.width / canvas.height ──
@@ -313,7 +316,7 @@ function renderViewport() {
 
   // Arena background
   if (arena) {
-    ctx.fillStyle = '#0e0e20';
+    ctx.fillStyle = '#0e0a1e';
     ctx.fillRect(
       Math.max(0, oX),
       Math.max(0, oY),
@@ -322,7 +325,7 @@ function renderViewport() {
     );
 
     // Grid lines
-    ctx.strokeStyle = '#1a1a30';
+    ctx.strokeStyle = '#2d1b4e';
     ctx.lineWidth   = 0.5;
     const x0 = Math.max(0, Math.floor(-oX / CELL));
     const x1 = Math.min(arena.width,  Math.ceil((W - oX) / CELL));
@@ -342,7 +345,7 @@ function renderViewport() {
     }
 
     // Arena border
-    ctx.strokeStyle = '#4a4a8a';
+    ctx.strokeStyle = '#b537f2';
     ctx.lineWidth   = 2;
     ctx.strokeRect(oX, oY, arena.width * CELL, arena.height * CELL);
 
@@ -353,8 +356,8 @@ function renderViewport() {
       const rw = obs.w * CELL;
       const rh = obs.h * CELL;
       if (rx + rw < 0 || rx > W || ry + rh < 0 || ry > H) continue;
-      ctx.fillStyle   = obs.type === 'wall' ? '#3a3a5a' : '#5a4a2a';
-      ctx.strokeStyle = obs.type === 'wall' ? '#5a5a8a' : '#8a7a4a';
+      ctx.fillStyle   = obs.type === 'wall' ? '#3d2864' : '#5a4a2a';
+      ctx.strokeStyle = obs.type === 'wall' ? '#6543a5' : '#8a7a4a';
       ctx.lineWidth   = 1;
       ctx.fillRect(rx, ry, rw, rh);
       ctx.strokeRect(rx, ry, rw, rh);
@@ -366,13 +369,13 @@ function renderViewport() {
     const px = p.x * CELL + oX;
     const py = p.y * CELL + oY;
     const isMine = p.ownerId === playerId;
-    ctx.fillStyle   = isMine ? '#44ff88' : '#ffdd44';
+    ctx.fillStyle   = isMine ? '#00e5cc' : '#ffd93d';
     ctx.shadowColor = ctx.fillStyle;
     ctx.shadowBlur  = 8;
     ctx.beginPath();
     ctx.arc(px, py, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = isMine ? 'rgba(68,255,136,0.3)' : 'rgba(255,221,68,0.3)';
+    ctx.strokeStyle = isMine ? 'rgba(0,229,204,0.3)' : 'rgba(255,217,61,0.3)';
     ctx.lineWidth   = 2;
     ctx.beginPath();
     ctx.moveTo(px, py);
@@ -415,7 +418,7 @@ function drawPlayer(p, oX, oY, isSelf) {
 
   // Shield ring
   if (p.shielded) {
-    ctx.strokeStyle = 'rgba(100,180,255,0.7)';
+    ctx.strokeStyle = 'rgba(0,212,255,0.7)';
     ctx.lineWidth   = 3;
     ctx.beginPath();
     ctx.arc(px, py, r + 5, 0, Math.PI * 2);
@@ -423,13 +426,13 @@ function drawPlayer(p, oX, oY, isSelf) {
   }
 
   // Body
-  ctx.fillStyle = isSelf ? '#44aaff' : (p.color || '#e74c3c');
-  if (isSelf) { ctx.shadowColor = '#44aaff'; ctx.shadowBlur = 12; }
+  ctx.fillStyle = isSelf ? '#00e5cc' : (p.color || '#ff6bcb');
+  if (isSelf) { ctx.shadowColor = '#00e5cc'; ctx.shadowBlur = 12; }
   ctx.beginPath();
   ctx.arc(px, py, r, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur  = 0;
-  ctx.strokeStyle = isSelf ? 'rgba(68,170,255,0.5)' : 'rgba(255,255,255,0.15)';
+  ctx.strokeStyle = isSelf ? 'rgba(0,229,204,0.5)' : 'rgba(255,255,255,0.15)';
   ctx.lineWidth   = 2;
   ctx.beginPath();
   ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -446,10 +449,10 @@ function drawPlayer(p, oX, oY, isSelf) {
   const bH = 4;
   const bX = px - bW / 2;
   const bY = py + r + 5;
-  ctx.fillStyle = '#333';
+  ctx.fillStyle = '#2d1b4e';
   ctx.fillRect(bX, bY, bW, bH);
   const pct = p.hp / 100;
-  ctx.fillStyle = pct > 0.5 ? '#2ecc71' : pct > 0.25 ? '#f1c40f' : '#e74c3c';
+  ctx.fillStyle = pct > 0.5 ? '#00e5cc' : pct > 0.25 ? '#ffd93d' : '#ff6bcb';
   ctx.fillRect(bX, bY, bW * pct, bH);
 }
 
